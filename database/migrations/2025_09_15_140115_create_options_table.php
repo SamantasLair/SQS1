@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('options', function (Blueprint $table) {
             $table->id();
-            // Kunci ke 'id' di tabel 'questions'
             $table->foreignId('question_id')->constrained()->onDelete('cascade');
             $table->text('option_text'); // 'teks_opsi'
             $table->boolean('is_correct')->default(false);

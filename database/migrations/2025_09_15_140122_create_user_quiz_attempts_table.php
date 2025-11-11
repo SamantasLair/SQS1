@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('quiz_attempts', function (Blueprint $table) {
             $table->id(); 
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Siapa yg mencoba
+            $table->foreignUuid('user_id')->constrained()->onDelete('cascade'); // <- DIGANTI
             $table->foreignId('quiz_id')->constrained()->onDelete('cascade'); // Kuis yg dicoba
             $table->decimal('score', 5, 2)->nullable();
             $table->timestamps(); 
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_quiz_attempts');
+        Schema::dropIfExists('quiz_attempts');
     }
 };

@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            // Kunci asal: 'quiz_id' kehubung ke 'id' di tabel 'quizzes'
             $table->foreignId('quiz_id')->constrained()->onDelete('cascade');
-            $table->text('question_text'); // 'teks_pertanyaan'
-            $table->string('question_type'); // 'tipe_pertanyaan', contoh: 'multiple_choice'
+            $table->text('question_text'); 
+            $table->string('question_type'); 
             $table->timestamps();
         });
     }
