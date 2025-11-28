@@ -27,22 +27,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'role' => 'admin',
-            'email_verified_at' => now(),
-        ]);
-
-        $admin2 = User::create([
-            'name' => 'Admin Kedua',
-            'email' => 'admin2@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-            'email_verified_at' => now(),
-        ]);
-
-        $admin3 = User::create([
-            'name' => 'Admin Ketiga',
-            'email' => 'admin3@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
+            'is_premium' => true,
             'email_verified_at' => now(),
         ]);
 
@@ -51,29 +36,27 @@ class DatabaseSeeder extends Seeder
             'email' => 'user1@example.com',
             'password' => Hash::make('password'),
             'role' => 'user',
+            'is_premium' => false,
             'email_verified_at' => now(),
         ]);
         
-        $user2 = User::create([
-            'name' => 'User Biasa Dua',
-            'email' => 'user2@example.com',
+        $userPremium = User::create([
+            'name' => 'User Premium',
+            'email' => 'premium@example.com',
             'password' => Hash::make('password'),
             'role' => 'user',
+            'is_premium' => true,
             'email_verified_at' => now(),
         ]);
 
-        $user3 = User::create([
-            'name' => 'User Biasa Tiga',
-            'email' => 'user3@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'user',
-            'email_verified_at' => now(),
-        ]);
-
+        // Data Kuis Contoh
         $quiz1 = Quiz::create([
             'user_id' => $user1->id,
             'title' => 'Kuis Sejarah Indonesia',
             'description' => 'Tes pengetahuan Anda tentang sejarah Indonesia.',
+            'join_code' => 'SEJARAH',
+            'timer' => 30,
+            'generation_source' => 'manual',
         ]);
 
         $q1 = Question::create([
@@ -86,65 +69,5 @@ class DatabaseSeeder extends Seeder
         Option::create(['question_id' => $q1->id, 'option_text' => 'Soeharto', 'is_correct' => false]);
         Option::create(['question_id' => $q1->id, 'option_text' => 'B.J. Habibie', 'is_correct' => false]);
         Option::create(['question_id' => $q1->id, 'option_text' => 'Gus Dur', 'is_correct' => false]);
-
-        $q2 = Question::create([
-            'quiz_id' => $quiz1->id,
-            'question_text' => 'Tahun berapa Indonesia merdeka?',
-            'question_type' => 'multiple_choice',
-        ]);
-
-        Option::create(['question_id' => $q2->id, 'option_text' => '1942', 'is_correct' => false]);
-        Option::create(['question_id' => $q2->id, 'option_text' => '1945', 'is_correct' => true]);
-        Option::create(['question_id' => $q2->id, 'option_text' => '1950', 'is_correct' => false]);
-        Option::create(['question_id' => $q2->id, 'option_text' => '1998', 'is_correct' => false]);
-        
-        $quiz2 = Quiz::create([
-            'user_id' => $user2->id,
-            'title' => 'Kuis Matematika Dasar',
-            'description' => 'Tes matematika sederhana.',
-        ]);
-
-        $q3 = Question::create([
-            'quiz_id' => $quiz2->id,
-            'question_text' => '1 + 1 = ?',
-            'question_type' => 'multiple_choice',
-        ]);
-
-        Option::create(['question_id' => $q3->id, 'option_text' => '2', 'is_correct' => true]);
-        Option::create(['question_id' => $q3->id, 'option_text' => '1', 'is_correct' => false]);
-        Option::create(['question_id' => $q3->id, 'option_text' => '3', 'is_correct' => false]);
-        Option::create(['question_id' => $q3->id, 'option_text' => '0', 'is_correct' => false]);
-        
-        QuizAttempt::create([
-            'user_id' => $user1->id,
-            'quiz_id' => $quiz1->id,
-            'score' => 100.00,
-            'created_at' => now()->subMinutes(10),
-        ]);
-        QuizAttempt::create([
-            'user_id' => $user2->id,
-            'quiz_id' => $quiz1->id,
-            'score' => 50.00,
-            'created_at' => now()->subMinutes(5),
-        ]);
-        QuizAttempt::create([
-            'user_id' => $user3->id,
-            'quiz_id' => $quiz1->id,
-            'score' => 100.00,
-            'created_at' => now()->subMinutes(12),
-        ]);
-
-        QuizAttempt::create([
-            'user_id' => $user1->id,
-            'quiz_id' => $quiz2->id,
-            'score' => 100.00,
-            'created_at' => now()->subMinutes(2),
-        ]);
-        QuizAttempt::create([
-            'user_id' => $user3->id,
-            'quiz_id' => $quiz2->id,
-            'score' => 0.00,
-            'created_at' => now()->subMinutes(1),
-        ]);
     }
 }

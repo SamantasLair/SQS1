@@ -9,10 +9,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('quizzes', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
+            $table->string('join_code')->unique()->nullable();
+            $table->integer('timer')->default(30);
+            $table->string('generation_source')->default('manual');
             $table->timestamps();
         });
     }

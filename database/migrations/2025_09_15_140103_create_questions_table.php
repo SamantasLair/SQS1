@@ -9,11 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('questions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('quiz_id')->constrained()->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('quiz_id')->constrained()->onDelete('cascade');
             $table->text('question_text');
-            $table->string('image')->nullable();
-            $table->string('question_type');
+            $table->string('question_type')->default('multiple_choice');
             $table->timestamps();
         });
     }

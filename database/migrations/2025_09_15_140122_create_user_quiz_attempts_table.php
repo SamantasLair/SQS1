@@ -6,23 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('quiz_attempts', function (Blueprint $table) {
-            $table->id(); 
-            $table->foreignUuid('user_id')->constrained()->onDelete('cascade'); // <- DIGANTI
-            $table->foreignId('quiz_id')->constrained()->onDelete('cascade'); // Kuis yg dicoba
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('quiz_id')->constrained()->onDelete('cascade');
             $table->decimal('score', 5, 2)->nullable();
-            $table->timestamps(); 
+            $table->timestamp('completed_at')->nullable();
+            $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('quiz_attempts');

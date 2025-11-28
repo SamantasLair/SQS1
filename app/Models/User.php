@@ -16,6 +16,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'is_premium',
+        'ai_usage_count',
+        'last_ai_usage_date',
     ];
 
     protected $hidden = [
@@ -28,6 +32,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_premium' => 'boolean',
+            'last_ai_usage_date' => 'date',
         ];
     }
 

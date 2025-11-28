@@ -1,94 +1,146 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center h-16">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">
-                    Selamat Datang, {{ Auth::user()->name }}!
-                </h2>
-                <p class="text-gray-600">Mari kita mulai belajar dan membuat kuis hari ini.</p>
-            </div>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
-                </div>
-                <input type="text" placeholder="Cari kuis..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-        </div>
+        <h2 class="font-bold text-3xl text-white tracking-tight drop-shadow-md">
+            Dashboard Utama
+        </h2>
     </x-slot>
 
     <div class="space-y-8">
-        <div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">Statistik</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                
-                <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
-                    <div class="flex-shrink-0 bg-blue-100 text-blue-600 rounded-full p-3">
-                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 3.75a.25.25 0 01.25-.25h12.5a.25.25 0 01.25.25v12.5a.25.25 0 01-.25.25H3.75a.25.25 0 01-.25-.25V3.75zM5 6.25v1.5h10v-1.5H5zm0 3v1.5h10v-1.5H5zm0 3v1.5h10v-1.5H5z" /></svg>
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/80 via-indigo-600/80 to-purple-600/80 p-8 shadow-2xl backdrop-blur-sm border border-white/10">
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="text-white">
+                    <h3 class="text-4xl font-black tracking-tight mb-2">Halo, {{ Auth::user()->name }}! 🚀</h3>
+                    <p class="text-indigo-100 text-lg font-light">Hari yang indah untuk belajar sesuatu yang baru.</p>
+                </div>
+                <div class="flex flex-wrap gap-4">
+                    <a href="{{ route('quizzes.create') }}" class="inline-flex items-center px-6 py-3 bg-white text-indigo-700 font-bold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition transform duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Buat Kuis
+                    </a>
+                    <a href="{{ route('quizzes.join.show') }}" class="inline-flex items-center px-6 py-3 bg-black/30 text-white font-bold rounded-2xl border border-white/30 backdrop-blur-md hover:bg-black/50 transition duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        Gabung
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-2xl bg-blue-500/20 text-blue-400 mr-5">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Total Kuis (Global)</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $totalKuis }}</p>
+                    <div>
+                        <p class="text-sm font-medium text-gray-400">Total Kuis Dibuat</p>
+                        <p class="text-3xl font-bold text-white">{{ $totalKuis }}</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
-                    <div class="flex-shrink-0 bg-green-100 text-green-600 rounded-full p-3">
-                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.403 12.652a3 3 0 00-2.824-2.824l-1.047-.348a3 3 0 00-3.416 3.416l.348 1.047a3 3 0 002.824 2.824l1.047.348a3 3 0 003.416-3.416l-.348-1.047zM17.828 15a5 5 0 01-7.07 0l-1.047-.348a5 5 0 01-3.416-3.416l-.348-1.047a5 5 0 010-7.07l.348-1.047a5 5 0 013.416-3.416l1.047-.348a5 5 0 017.07 0l1.047.348a5 5 0 013.416 3.416l.348 1.047a5 5 0 010 7.07l-.348 1.047a5 5 0 01-3.416 3.416l-1.047.348z" clip-rule="evenodd" /></svg>
+            <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-2xl bg-purple-500/20 text-purple-400 mr-5">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Kuis Dikerjakan</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $kuisDikerjakan }}</p>
+                    <div>
+                        <p class="text-sm font-medium text-gray-400">Kuis Dikerjakan</p>
+                        <p class="text-3xl font-bold text-white">{{ $kuisDikerjakan }}</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
-                    <div class="flex-shrink-0 bg-yellow-100 text-yellow-600 rounded-full p-3">
-                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M15.22 6.268a.75.75 0 01.032 1.06l-5.25 6.5a.75.75 0 01-1.088.018l-3.25-3.5a.75.75 0 111.088-1.036l2.704 2.923 4.71-5.83a.75.75 0 011.06-.032zM2.75 4.25a.75.75 0 01.75-.75h13a.75.75 0 010 1.5h-13a.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
+            <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-colors duration-300">
+                <div class="flex items-center">
+                    <div class="p-4 rounded-2xl bg-green-500/20 text-green-400 mr-5">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Rata-rata Skor</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ number_format($rataRataSkor, 0) }}</p>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-md flex items-center">
-                    <div class="flex-shrink-0 bg-purple-100 text-purple-600 rounded-full p-3">
-                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M15.22 6.268a.75.75 0 01.032 1.06l-5.25 6.5a.75.75 0 01-1.088.018l-3.25-3.5a.75.75 0 111.088-1.036l2.704 2.923 4.71-5.83a.75.75 0 011.06-.032zM2.75 4.25a.75.75 0 01.75-.75h13a.75.75 0 010 1.5h-13a.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm text-gray-600">Peringkat (Coming Soon)</p>
-                        <p class="text-2xl font-bold text-gray-900">#1</p>
+                    <div>
+                        <p class="text-sm font-medium text-gray-400">Rata-rata Skor</p>
+                        <p class="text-3xl font-bold text-white">{{ number_format($rataRataSkor, 1) }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div>
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">Kuis Terbaru</h3>
-                <a href="{{ route('quizzes.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Lihat Semua</a>
+        <div class="bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+            <div class="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-white">Aktivitas Terbaru</h3>
+                    <p class="text-sm text-gray-400">Daftar kuis yang baru saja ditambahkan ke sistem.</p>
+                </div>
+                <a href="{{ route('quizzes.index') }}" class="text-sm font-bold text-indigo-400 hover:text-indigo-300 flex items-center transition-colors">
+                    Lihat Semua
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <ul class="divide-y divide-gray-200">
-                    @forelse($kuisTerbaru as $quiz)
-                    <li class="p-4 flex justify-between items-center hover:bg-gray-50">
-                        <div>
-                            <p class="text-base font-semibold text-gray-900">{{ $quiz->title }}</p>
-                            <p class="text-sm text-gray-600">Dibuat oleh {{ $quiz->user->name }} &middot; {{ $quiz->questions->count() }} Pertanyaan</p>
-                        </div>
-                        <div>
-                            <a href="{{ route('quizzes.start', $quiz) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500">
-                                Mulai Kuis
-                            </a>
-                        </div>
-                    </li>
-                    @empty
-                    <li class="p-4 text-center text-gray-500">
-                        Belum ada kuis yang dibuat.
-                    </li>
-                    @endforelse
-                </ul>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-black/20 text-gray-400">
+                        <tr>
+                            <th class="px-8 py-5 text-left text-xs font-bold uppercase tracking-wider">Judul Kuis</th>
+                            <th class="px-8 py-5 text-left text-xs font-bold uppercase tracking-wider">Pembuat</th>
+                            <th class="px-8 py-5 text-left text-xs font-bold uppercase tracking-wider">Durasi</th>
+                            <th class="px-8 py-5 text-left text-xs font-bold uppercase tracking-wider">Kode</th>
+                            <th class="px-8 py-5 text-right text-xs font-bold uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        @forelse($kuisTerbaru as $quiz)
+                        <tr class="hover:bg-white/5 transition-colors duration-150 group">
+                            <td class="px-8 py-5 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg">
+                                        {{ substr($quiz->title, 0, 1) }}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">{{ Str::limit($quiz->title, 30) }}</div>
+                                        <div class="text-xs text-gray-500">{{ Str::limit($quiz->description, 40) }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-8 py-5 whitespace-nowrap">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/5">
+                                    {{ $quiz->user->name }}
+                                </span>
+                            </td>
+                            <td class="px-8 py-5 whitespace-nowrap text-sm text-gray-400">
+                                {{ $quiz->timer }} Menit
+                            </td>
+                            <td class="px-8 py-5 whitespace-nowrap">
+                                <span class="font-mono text-sm text-indigo-400 tracking-wider">
+                                    {{ $quiz->join_code }}
+                                </span>
+                            </td>
+                            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end items-center space-x-3">
+                                    @if(Auth::id() === $quiz->user_id)
+                                        <a href="{{ route('quizzes.leaderboard', $quiz) }}" class="p-2 rounded-lg text-gray-500 hover:text-yellow-400 hover:bg-white/5 transition-all" title="Leaderboard">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                        </a>
+                                        <a href="{{ route('quizzes.edit', $quiz) }}" class="p-2 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-all" title="Edit">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('quizzes.start', $quiz) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-xl font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition ease-in-out duration-150 shadow-lg shadow-indigo-600/20">
+                                        Mulai
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-8 py-16 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-16 h-16 text-gray-600 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <p class="text-lg">Belum ada kuis yang tersedia saat ini.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

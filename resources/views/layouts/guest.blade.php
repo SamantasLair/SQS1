@@ -11,31 +11,69 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.0.6/tsparticles.slim.bundle.min.js"></script>
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center bg-gray-100">
-            <div class="w-full max-w-5xl m-4 sm:m-6 lg:m-8">
-                
-                <div class="flex bg-white shadow-2xl rounded-lg overflow-hidden h-auto md:h-[40rem]">
-                    
-                    <div class="hidden md:flex flex-col justify-center items-center w-1/2 bg-gradient-to-b from-blue-500 to-indigo-600 p-12 text-white relative h-full">
-                        <div class="absolute top-8 left-8 flex items-center justify-center h-16 w-16 bg-white rounded-full text-indigo-600 text-3xl font-bold">
-                            SQS
-                        </div>
-                        <div class="text-center">
-                            <h1 class="text-4xl font-bold mb-3">Sistem Quiz Semalam</h1>
-                            <p class="text-lg text-blue-100">Solusi Ujian Tanpa Batas Waktu!</p>
-                        </div>
-                    </div>
+    <body class="font-sans text-gray-100 antialiased bg-gray-900 overflow-hidden">
+        
+        <div id="tsparticles-guest" class="fixed inset-0 z-0 pointer-events-none"></div>
 
-                    <div class="w-full md:w-1/2 p-8 sm:p-12 h-full flex flex-col overflow-y-auto">
-                        <div class="my-auto">
-                            {{ $slot }}
-                        </div>
+        <div class="min-h-screen flex flex-col justify-center items-center relative z-10 px-4 sm:px-6 lg:px-8">
+            <div class="mb-8">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="p-3 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/30">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
+                    <span class="text-3xl font-bold text-white tracking-wider drop-shadow-md">SQS</span>
+                </a>
+            </div>
 
-                </div>
+            <div class="w-full sm:max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden p-8 transform hover:scale-[1.01] transition-transform duration-300">
+                {{ $slot }}
             </div>
         </div>
+
+        <script>
+            (async () => {
+                await tsParticles.load("tsparticles-guest", {
+                    background: {
+                        color: { value: "#0f172a" },
+                        image: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)"
+                    },
+                    fpsLimit: 120,
+                    particles: {
+                        color: { value: ["#818cf8", "#c084fc", "#e879f9"] },
+                        links: {
+                            color: "#ffffff",
+                            distance: 150,
+                            enable: true,
+                            opacity: 0.05,
+                            width: 1,
+                        },
+                        move: {
+                            direction: "top",
+                            enable: true,
+                            outModes: { default: "out" },
+                            random: true,
+                            speed: 0.5,
+                            straight: false,
+                        },
+                        number: {
+                            density: { enable: true, area: 800 },
+                            value: 40,
+                        },
+                        opacity: {
+                            value: { min: 0.1, max: 0.5 },
+                        },
+                        shape: {
+                            type: "circle",
+                        },
+                        size: {
+                            value: { min: 1, max: 3 },
+                        },
+                    },
+                    detectRetina: true,
+                });
+            })();
+        </script>
     </body>
 </html>

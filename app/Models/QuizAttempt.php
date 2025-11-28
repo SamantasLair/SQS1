@@ -4,17 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class QuizAttempt extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'user_id',
         'quiz_id',
         'score',
+        'completed_at',
     ];
 
     public function user(): BelongsTo
@@ -27,7 +29,7 @@ class QuizAttempt extends Model
         return $this->belongsTo(Quiz::class);
     }
 
-    public function userAnswers(): HasMany
+    public function answers(): HasMany
     {
         return $this->hasMany(UserAnswer::class);
     }

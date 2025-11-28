@@ -4,23 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserAnswer extends Model
 {
-    use HasFactory;
-
-    public $timestamps = false;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'quiz_attempt_id',
         'question_id',
         'option_id',
+        'answer_text',
+        'is_correct',
     ];
 
-    public function quizAttempt(): BelongsTo
+    public function attempt(): BelongsTo
     {
-        return $this->belongsTo(QuizAttempt::class);
+        return $this->belongsTo(QuizAttempt::class, 'quiz_attempt_id');
     }
 
     public function question(): BelongsTo
