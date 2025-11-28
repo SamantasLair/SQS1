@@ -9,15 +9,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Midtrans\Transaction as MidtransTransaction;
 
 class PaymentController extends Controller
 {
     public function __construct()
     {
-        Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = config('midtrans.is_sanitized');
-        Config::$is3ds = config('midtrans.is_3ds');
+        Config::$serverKey = config('midtrans.server_key') ?? env('MIDTRANS_SERVER_KEY');
+        Config::$clientKey = config('midtrans.client_key') ?? env('MIDTRANS_CLIENT_KEY');
+        Config::$isProduction = config('midtrans.is_production') ?? env('MIDTRANS_IS_PRODUCTION', false);
+        Config::$isSanitized = config('midtrans.is_sanitized') ?? env('MIDTRANS_IS_SANITIZED', true);
+        Config::$is3ds = config('midtrans.is_3ds') ?? env('MIDTRANS_IS_3DS', true);
     }
 
     public function checkout()
@@ -36,17 +38,13 @@ class PaymentController extends Controller
                 'first_name' => $user->name,
                 'email' => $user->email,
             ],
-            'item_details' => [
-                [
-                    'id' => 'PREMIUM_PLAN',
-                    'price' => $amount,
-                    'quantity' => 1,
-                    'name' => 'Upgrade SQS Premium',
-                ]
-            ]
         ];
 
-        $snapToken = Snap::getSnapToken($params);
+        try {
+            $snapToken = Snap::getSnapToken($params);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal terhubung ke Midtrans: ' . $e->getMessage());
+        }
 
         Transaction::create([
             'user_id' => $user->id,
@@ -59,30 +57,45 @@ class PaymentController extends Controller
         return view('payment.checkout', compact('snapToken', 'amount'));
     }
 
-    public function callback(Request $request)
+    public function success(Request $request)
     {
-        $serverKey = config('midtrans.server_key');
-        $hashed = hash("sha512", $request->order_id.$request->status_code.$request->gross_amount.$serverKey);
+        $orderId = $request->query('order_id');
+        
+        if (!$orderId) {
+            return redirect()->route('dashboard');
+        }
 
-        if ($hashed == $request->signature_key) {
-            $transaction = Transaction::where('order_id', $request->order_id)->first();
-            
-            if (!$transaction) return response()->json(['message' => 'Transaction not found'], 404);
+        $transaction = Transaction::where('order_id', $orderId)->firstOrFail();
 
-            if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+        if ($transaction->status === 'success') {
+            return redirect()->route('dashboard')->with('status', 'Pembayaran Berhasil!');
+        }
+
+        try {
+            $midtransStatus = MidtransTransaction::status($orderId);
+            $transactionStatus = $midtransStatus->transaction_status;
+
+            if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
                 $transaction->update(['status' => 'success']);
-
+                
                 $user = User::find($transaction->user_id);
                 $user->update([
                     'is_premium' => true,
-                    'ai_generation_limit' => 100, 
+                    'ai_generation_limit' => 100
                 ]);
 
-            } elseif ($request->transaction_status == 'expire' || $request->transaction_status == 'cancel' || $request->transaction_status == 'deny') {
+                return redirect()->route('dashboard')->with('status', 'Selamat! Akun Premium Aktif.');
+            } 
+            elseif ($transactionStatus == 'expire' || $transactionStatus == 'cancel' || $transactionStatus == 'deny') {
                 $transaction->update(['status' => 'failed']);
+                return redirect()->route('dashboard')->with('error', 'Pembayaran Gagal atau Dibatalkan.');
             }
-        }
+            else {
+                return redirect()->route('dashboard')->with('status', 'Pembayaran sedang diproses, silakan refresh nanti.');
+            }
 
-        return response()->json(['status' => 'OK']);
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard')->with('error', 'Gagal memverifikasi status pembayaran.');
+        }
     }
 }
