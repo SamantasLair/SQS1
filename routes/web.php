@@ -11,7 +11,7 @@ use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\JoinQuizController;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
-
+use App\Http\Controllers\PaymentController; 
 Route::get('/', function () {
     $popularQuizzes = Quiz::with('user')
         ->withCount('attempts')
@@ -74,4 +74,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+
+Route::middleware('auth')->group(function () {
+    Route::get('/payment/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
+});
+
+Route::post('/payment/callback', [PaymentController::class, 'callback']);
 require __DIR__.'/auth.php';
+
