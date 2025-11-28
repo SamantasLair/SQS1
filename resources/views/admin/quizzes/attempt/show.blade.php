@@ -1,38 +1,46 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Mengerjakan: {{ $attempt->quiz->title }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+    <div class="py-12 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div class="max-w-3xl w-full mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-lg sm:rounded-2xl border-t-4 border-indigo-600">
+                <div class="p-8 text-center">
                     
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-600">Pertanyaan {{ $progress }}</p>
-                        <h3 class="text-2xl font-semibold mt-1">{{ $question->question_text }}</h3>
+                    <div class="inline-block p-4 rounded-full bg-indigo-50 mb-6">
+                        <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
                     </div>
 
-                    <form action="{{ route('attempt.question.store', $attempt) }}" method="POST">
-                        @csrf
-                        <div class="space-y-4">
-                            @foreach ($question->options as $option)
-                                <label for="option-{{ $option->id }}" class="block w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                    <input type="radio" name="option_id" value="{{ $option->id }}" id="option-{{ $option->id }}" class="mr-2" required>
-                                    <span>{{ $option->option_text }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        
-                        <div class="mt-6">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
-                                Lanjut
-                            </button>
-                        </div>
-                    </form>
+                    <h2 class="text-3xl font-extrabold text-gray-900 mb-2">
+                        {{ $quiz->title }}
+                    </h2>
+                    
+                    <p class="text-gray-500 mb-8 max-w-lg mx-auto">
+                        {{ $quiz->description ?? 'Persiapkan dirimu, waktu akan berjalan otomatis setelah kamu menekan tombol mulai.' }}
+                    </p>
 
+                    <div class="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8 bg-gray-50 p-4 rounded-xl">
+                        <div class="text-center border-r border-gray-200">
+                            <span class="block text-gray-400 text-xs uppercase font-bold">Durasi</span>
+                            <span class="block text-xl font-bold text-gray-800">{{ $quiz->time_limit }} Menit</span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-gray-400 text-xs uppercase font-bold">Total Soal</span>
+                            <span class="block text-xl font-bold text-gray-800">{{ $quiz->questions_count ?? 0 }}</span>
+                        </div>
+                    </div>
+
+                    <form action="{{ route('quizzes.start', $quiz) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full max-w-sm px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transform transition duration-300">
+                            Mulai Kuis Sekarang 🔥
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6">
+                        <a href="{{ route('quizzes.index') }}" class="text-sm text-gray-500 hover:text-gray-700 font-medium">
+                            &larr; Kembali ke Daftar
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
