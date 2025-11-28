@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-bold text-3xl text-white tracking-tight drop-shadow-md">
             Edit Kuis
         </h2>
     </x-slot>
@@ -9,59 +9,75 @@
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
             
             @if(session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">{{ session('success') }}</div>
+                <div class="mb-6 bg-green-500/20 border border-green-500/50 text-green-200 px-6 py-4 rounded-xl shadow-lg font-medium">{{ session('success') }}</div>
             @endif
             @if(session('error'))
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{{ session('error') }}</div>
+                <div class="mb-6 bg-red-500/20 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl shadow-lg font-medium">{{ session('error') }}</div>
             @endif
 
             <form action="{{ route('quizzes.update', $quiz) }}" method="POST">
                 @csrf
                 @method('PUT')
 
-                <div class="bg-white shadow-sm sm:rounded-lg mb-6 p-6">
-                    <h3 class="text-lg font-medium mb-4">Detail Kuis</h3>
+                <div class="bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl sm:rounded-2xl mb-8 p-8">
+                    <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-4">Detail Kuis</h3>
                     <div class="grid grid-cols-1 gap-6">
-                        <input type="text" name="title" value="{{ old('title', $quiz->title) }}" class="w-full rounded-md border-gray-300" required>
-                        <textarea name="description" rows="2" class="w-full rounded-md border-gray-300">{{ old('description', $quiz->description) }}</textarea>
-                        <input type="number" name="timer" value="{{ old('timer', $quiz->timer) }}" class="w-full rounded-md border-gray-300" required>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Judul</label>
+                            <input type="text" name="title" value="{{ old('title', $quiz->title) }}" class="w-full rounded-xl bg-black/20 border-gray-600 text-white focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Deskripsi</label>
+                            <textarea name="description" rows="2" class="w-full rounded-xl bg-black/20 border-gray-600 text-white focus:ring-indigo-500 focus:border-indigo-500">{{ old('description', $quiz->description) }}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Timer (Menit)</label>
+                            <input type="number" name="timer" value="{{ old('timer', $quiz->timer) }}" class="w-full rounded-xl bg-black/20 border-gray-600 text-white focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
                     </div>
                 </div>
 
                 <div class="space-y-6">
                     <template x-for="(question, qIndex) in questions" :key="question.temp_id">
-                        <div class="bg-white shadow-sm sm:rounded-lg p-6 border border-gray-200">
+                        <div class="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg sm:rounded-2xl p-6 relative group transition hover:bg-white/[0.07]">
                             <div class="flex justify-between items-center mb-4">
-                                <h4 class="font-bold text-indigo-700" x-text="'Soal ' + (qIndex + 1)"></h4>
-                                <button type="button" @click="removeQuestion(qIndex)" class="text-red-500 text-sm">Hapus</button>
+                                <h4 class="font-bold text-indigo-400 text-lg" x-text="'Soal ' + (qIndex + 1)"></h4>
+                                <button type="button" @click="removeQuestion(qIndex)" class="text-red-400 hover:text-red-300 text-sm font-semibold bg-red-500/10 px-3 py-1 rounded-lg border border-red-500/20 transition">Hapus</button>
                             </div>
                             
                             <input type="hidden" :name="'questions['+qIndex+'][id]'" :value="question.id">
-                            <textarea :name="'questions['+qIndex+'][text]'" x-model="question.question_text" rows="2" class="w-full rounded-md border-gray-300 mb-3" placeholder="Tulis pertanyaan..." required></textarea>
+                            <textarea :name="'questions['+qIndex+'][text]'" x-model="question.question_text" rows="2" class="w-full rounded-xl bg-black/20 border-gray-600 text-white mb-4 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Tulis pertanyaan..." required></textarea>
                             
-                            <select :name="'questions['+qIndex+'][question_type]'" x-model="question.question_type" class="w-full rounded-md border-gray-300 mb-4">
+                            <select :name="'questions['+qIndex+'][question_type]'" x-model="question.question_type" class="w-full rounded-xl bg-black/20 border-gray-600 text-white mb-6 focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="multiple_choice">Pilihan Ganda</option>
                                 <option value="essay">Essay</option>
                             </select>
 
-                            <div x-show="question.question_type === 'multiple_choice'" class="ml-4 border-l-2 pl-4">
+                            <div x-show="question.question_type === 'multiple_choice'" class="ml-4 border-l-2 border-indigo-500/30 pl-6 space-y-3">
                                 <template x-for="(option, oIndex) in question.options" :key="oIndex">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <input type="radio" :name="'questions['+qIndex+'][correct_option]'" :value="oIndex" :checked="option.is_correct" required>
+                                    <div class="flex items-center gap-3">
+                                        <input type="radio" :name="'questions['+qIndex+'][correct_option]'" :value="oIndex" :checked="option.is_correct" required class="bg-black/20 border-gray-500 text-indigo-500 focus:ring-indigo-500">
                                         <input type="hidden" :name="'questions['+qIndex+'][options]['+oIndex+'][id]'" :value="option.id">
-                                        <input type="text" :name="'questions['+qIndex+'][options]['+oIndex+'][text]'" x-model="option.option_text" class="w-full rounded-md border-gray-300" placeholder="Pilihan jawaban">
-                                        <button type="button" @click="removeOption(qIndex, oIndex)" class="text-red-500">X</button>
+                                        <input type="text" :name="'questions['+qIndex+'][options]['+oIndex+'][text]'" x-model="option.option_text" class="w-full rounded-lg bg-black/20 border-gray-600 text-white text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Pilihan jawaban">
+                                        <button type="button" @click="removeOption(qIndex, oIndex)" class="text-gray-500 hover:text-red-400 transition font-bold px-2">&times;</button>
                                     </div>
                                 </template>
-                                <button type="button" @click="addOption(qIndex)" class="text-sm text-blue-600">+ Tambah Opsi</button>
+                                <button type="button" @click="addOption(qIndex)" class="text-sm font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 mt-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Tambah Opsi
+                                </button>
                             </div>
                         </div>
                     </template>
                 </div>
 
-                <div class="mt-6 flex justify-between sticky bottom-4 bg-gray-100 p-4 rounded-lg shadow">
-                    <button type="button" @click="addQuestion()" class="bg-white border px-4 py-2 rounded">Tambah Soal</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan Semua Perubahan</button>
+                <div class="mt-8 flex justify-between items-center sticky bottom-6 bg-gray-900/90 backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-white/10 z-20">
+                    <button type="button" @click="addQuestion()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3 rounded-xl font-semibold transition">
+                        + Tambah Soal
+                    </button>
+                    <button type="submit" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-indigo-500/30 hover:scale-105 transition transform">
+                        Simpan Perubahan
+                    </button>
                 </div>
             </form>
         </div>
