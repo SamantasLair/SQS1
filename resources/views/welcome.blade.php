@@ -292,7 +292,7 @@
                                 <span class="ml-2 text-xl font-bold text-gray-900">SQS</span>
                             </div>
                             <p class="text-gray-500 text-sm leading-relaxed">
-                                Sistem Quiz Semalam. Platform belajar interaktif untuk semua kalangan.
+                                Sistem Quiz Semalam. Platform belajar interaktif untuk semua.
                             </p>
                         </div>
                         
