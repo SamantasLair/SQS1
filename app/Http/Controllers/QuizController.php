@@ -3,27 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quiz;
-use App\Models\Question;
-use App\Models\Option;
 use App\Models\QuizAttempt;
-use App\Services\GeminiService;
+use App\Http\Requests\StoreQuizRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Smalot\PdfParser\Parser;
+use Illuminate\Support\Facades\Storage;
 
 class QuizController extends Controller
 {
-    protected $geminiService;
-
-    public function __construct(GeminiService $geminiService)
-    {
-        $this->geminiService = $geminiService;
-    }
-
     public function index(): View
     {
         $quizzes = Auth::user()->quizzes()->latest()->get();
@@ -35,65 +26,52 @@ class QuizController extends Controller
         return view('quizzes.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreQuizRequest $request): RedirectResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'time_limit' => 'required|integer|min:1',
-            'document' => 'nullable|mimes:pdf|max:10240', 
-            'topic_text' => 'nullable|string',
-            'question_count' => 'required|integer|min:1|max:20',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $quizData = $request->only(['title', 'description', 'time_limit']);
-            
+        DB::transaction(function () use ($request) {
             do {
                 $code = Str::upper(Str::random(6));
             } while (Quiz::where('join_code', $code)->exists());
-            
-            $quizData['join_code'] = $code;
-            $quiz = Auth::user()->quizzes()->create($quizData);
 
-            $questionsData = [];
+            $quiz = Auth::user()->quizzes()->create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'join_code' => $code,
+            ]);
 
-            if ($request->hasFile('document')) {
-                $parser = new Parser();
-                $pdf = $parser->parseFile($request->file('document')->getPathname());
-                $text = $pdf->getText();
-                $questionsData = $this->geminiService->generateQuizFromText($text, $request->question_count);
-            } elseif ($request->filled('topic_text')) {
-                $questionsData = $this->geminiService->generateQuizFromText($request->topic_text, $request->question_count);
-            }
+            foreach ($request->questions as $qIndex => $qData) {
+                $imagePath = null;
+                if ($request->hasFile("questions.{$qIndex}.image")) {
+                    $imagePath = $request->file("questions.{$qIndex}.image")->store('question_images', 'public');
+                }
 
-            foreach ($questionsData as $qData) {
                 $question = $quiz->questions()->create([
-                    'question_text' => $qData['question'],
+                    'question_text' => $qData['question_text'],
+                    'question_type' => $qData['question_type'],
+                    'image' => $imagePath,
                 ]);
 
-                foreach ($qData['options'] as $optData) {
-                    $question->options()->create([
-                        'option_text' => $optData['text'],
-                        'is_correct' => $optData['is_correct'],
-                    ]);
+                if ($qData['question_type'] === 'multiple_choice' && isset($qData['options'])) {
+                    foreach ($qData['options'] as $oIndex => $oData) {
+                        $isCorrect = (int)$qData['correct_option_index'] === $oIndex;
+                        $question->options()->create([
+                            'option_text' => $oData['option_text'],
+                            'is_correct' => $isCorrect,
+                        ]);
+                    }
                 }
             }
+        });
 
-            DB::commit();
-
-            return redirect()->route('quizzes.edit', $quiz)->with('success', 'Kuis berhasil dibuat dan digenerate!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal membuat kuis: ' . $e->getMessage())->withInput();
-        }
+        return redirect()->route('quizzes.index')->with('success', 'Kuis berhasil dibuat dengan soal lengkap.');
     }
 
     public function show(Quiz $quiz): View
     {
+        if ($quiz->user_id !== Auth::id()) {
+            abort(403);
+        }
+        $quiz->load('questions.options');
         return view('quizzes.show', compact('quiz'));
     }
 
@@ -102,7 +80,6 @@ class QuizController extends Controller
         if ($quiz->user_id !== Auth::id()) {
             abort(403);
         }
-        $quiz->load('questions.options');
         return view('quizzes.edit', compact('quiz'));
     }
 
@@ -111,46 +88,29 @@ class QuizController extends Controller
         if ($quiz->user_id !== Auth::id()) {
             abort(403);
         }
-
+        
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'time_limit' => 'required|integer|min:1',
-            'questions' => 'array',
-            'questions.*.text' => 'required|string',
-            'questions.*.options' => 'array|min:2',
         ]);
 
-        DB::transaction(function () use ($request, $quiz) {
-            $quiz->update($request->only(['title', 'description', 'time_limit']));
+        $quiz->update($request->only('title', 'description'));
 
-            $quiz->questions()->delete();
-
-            if ($request->has('questions')) {
-                foreach ($request->questions as $qIndex => $qData) {
-                    $question = $quiz->questions()->create([
-                        'question_text' => $qData['text']
-                    ]);
-
-                    if (isset($qData['options'])) {
-                        foreach ($qData['options'] as $oIndex => $oData) {
-                            $question->options()->create([
-                                'option_text' => $oData['text'],
-                                'is_correct' => isset($request->correct_answers[$qIndex]) && $request->correct_answers[$qIndex] == $oIndex
-                            ]);
-                        }
-                    }
-                }
-            }
-        });
-
-        return redirect()->route('quizzes.index')->with('success', 'Kuis berhasil diperbarui.');
+        return redirect()->route('quizzes.index')->with('success', 'Informasi kuis diperbarui.');
     }
 
     public function destroy(Quiz $quiz): RedirectResponse
     {
         if ($quiz->user_id !== Auth::id()) {
             abort(403);
+        }
+
+        if ($quiz->questions) {
+            foreach ($quiz->questions as $question) {
+                if ($question->image) {
+                    Storage::disk('public')->delete($question->image);
+                }
+            }
         }
 
         $quiz->delete();
