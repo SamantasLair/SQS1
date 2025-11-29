@@ -32,6 +32,7 @@
                             <a href="#mengapa" class="text-sm font-medium text-gray-300 hover:text-white transition-colors">Mengapa Kami</a>
                             <a href="#keunggulan" class="text-sm font-medium text-gray-300 hover:text-white transition-colors">Keunggulan</a>
                             <a href="#populer" class="text-sm font-medium text-gray-300 hover:text-white transition-colors">Kuis Populer</a>
+                            <a href="{{ route('pricing.index') }}" class="text-sm font-medium text-gray-300 hover:text-white transition-colors">Harga</a>
                             <a href="#tentang" class="text-sm font-medium text-gray-300 hover:text-white transition-colors">Tentang Kami</a>
                         </div>
 

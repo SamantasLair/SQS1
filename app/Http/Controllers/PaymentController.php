@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log; 
 use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
@@ -15,11 +16,16 @@ class PaymentController extends Controller
 {
     public function __construct()
     {
-        Config::$serverKey = config('midtrans.server_key') ?? env('MIDTRANS_SERVER_KEY');
-        Config::$clientKey = config('midtrans.client_key') ?? env('MIDTRANS_CLIENT_KEY');
-        Config::$isProduction = config('midtrans.is_production') ?? env('MIDTRANS_IS_PRODUCTION', false);
-        Config::$isSanitized = config('midtrans.is_sanitized') ?? env('MIDTRANS_IS_SANITIZED', true);
-        Config::$is3ds = config('midtrans.is_3ds') ?? env('MIDTRANS_IS_3DS', true);
+        $this->configureMidtrans();
+    }
+
+    private function configureMidtrans()
+    {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$clientKey = config('midtrans.client_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = config('midtrans.is_sanitized');
+        Config::$is3ds = config('midtrans.is_3ds');
     }
 
     public function checkout(Request $request)
@@ -35,7 +41,7 @@ class PaymentController extends Controller
         
         $amount = match($plan) {
             'pro' => 100000,
-            'premium' => 250000,
+            'premium' => 1,
             default => 100000
         };
 
@@ -70,7 +76,7 @@ class PaymentController extends Controller
             'amount' => $amount,
             'status' => 'pending',
             'snap_token' => $snapToken,
-            'metadata' => ['plan' => $plan]
+            'metadata' => json_encode(['plan' => $plan]) 
         ]);
 
         return view('payment.checkout', compact('snapToken', 'amount', 'plan'));
@@ -83,10 +89,20 @@ class PaymentController extends Controller
 
     public function callback(Request $request)
     {
+        $this->configureMidtrans();
+
+    // Debugging sementara 
+    Log::info('Midtrans Config:', [
+        'server_key_exists' => !empty(Config::$serverKey),
+        'server_key_prefix' => substr(Config::$serverKey, 0, 5), // Cek apakah SB-Mid
+        'is_production' => Config::$isProduction
+    ]);
+
         try {
             $notif = new Notification();
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Notification Error'], 500);
+            Log::error('Midtrans Notification Error: ' . $e->getMessage());
+            return response()->json(['message' => 'Notification Error: ' . $e->getMessage()], 500);
         }
 
         $transaction = $notif->transaction_status;
@@ -132,7 +148,11 @@ class PaymentController extends Controller
         $transaction->update(['status' => 'success']);
 
         $metadata = $transaction->metadata;
-        $newRole = $metadata['plan'] ?? 'pro';
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true);
+        }
+        
+        $newRole = $metadata['plan'] ?? 'pro'; 
 
         $user = User::find($transaction->user_id);
         if ($user) {
