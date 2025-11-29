@@ -215,7 +215,7 @@ class QuizController extends Controller
 
     private function getAvailableGeminiModel($apiKey)
     {
-        $response = Http::get("[https://generativelanguage.googleapis.com/v1beta/models?key=](https://generativelanguage.googleapis.com/v1beta/models?key=){$apiKey}");
+        $response = Http::get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
         if ($response->failed()) return 'models/gemini-1.5-flash';
 
         $data = $response->json();
