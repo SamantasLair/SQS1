@@ -133,14 +133,18 @@ class QuizController extends Controller
 
         $modelName = $this->getAvailableGeminiModel($apiKey);
 
-        $finalPrompt = "You are a teacher. Create {$qCount} {$qType} questions based on the context provided below.
+        $finalPrompt = "You are a teacher creating a quiz. Create {$qCount} {$qType} questions based on the context provided.
         
-        RULES:
-        1. Language: Indonesian.
-        2. Output format: JSON Array of Objects (RFC 8259 compatible). NO markdown.
-        3. If BOTH PDF and User Instruction are provided, use the User Instruction to guide WHAT to ask about from the PDF.
-        4. If ONLY User Instruction is provided, generate questions based on that topic/knowledge.
-        
+        RULES FOR MATHEMATICS VS CODE:
+        1. If the context is MATHEMATICS or PHYSICS: You MUST wrap all formulas, equations, variables, and numbers with exponents in LaTeX delimiters using single dollar signs. 
+           Example: Use '\$x^2 + y^2 = z^2\$' instead of 'x^2 + y^2 = z^2'. Use '\$\\sqrt{144}\$' for roots.
+        2. If the context is COMPUTER SCIENCE / PROGRAMMING / LOGIC: Do NOT use LaTeX for code syntax or logical operators unless it is a mathematical formula.
+           Example: 'Use the ^ operator for XOR' (Keep as is, DO NOT wrap in dollar signs).
+           Example: 'The complexity is \$O(n^2)\$' (Wrap this because it is math notation).
+        3. Output format: JSON Array of Objects (RFC 8259 compatible). NO Markdown formatting (do not use ```json).
+        4. Language: Indonesian.
+        5. Escape backslashes in JSON properly (e.g. use '\\\\' for LaTeX commands).
+
         JSON Structure for multiple_choice:
         [{\"question\": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"correct_index\": 0}]
         
@@ -171,11 +175,23 @@ class QuizController extends Controller
             throw new \Exception('Respon AI kosong.');
         }
 
-        $jsonContent = str_replace(['```json', '```'], '', $responseData['candidates'][0]['content']['parts'][0]['text']);
+        $text = $responseData['candidates'][0]['content']['parts'][0]['text'];
+        
+        $cleanText = preg_replace('/```json\s*|\s*```/', '', $text);
+    
+        $start = strpos($cleanText, '[');
+        $end = strrpos($cleanText, ']');
+        
+        if ($start !== false && $end !== false) {
+            $jsonContent = substr($cleanText, $start, ($end - $start) + 1);
+        } else {
+            $jsonContent = $cleanText;
+        }
+
         $questionsData = json_decode($jsonContent, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Gagal parsing JSON AI.');
+            throw new \Exception('Gagal parsing JSON AI: ' . json_last_error_msg());
         }
 
         DB::transaction(function() use ($quiz, $questionsData, $qType) {
@@ -199,8 +215,8 @@ class QuizController extends Controller
 
     private function getAvailableGeminiModel($apiKey)
     {
-        $response = Http::get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
-        if ($response->failed()) return 'models/gemini-pro';
+        $response = Http::get("[https://generativelanguage.googleapis.com/v1beta/models?key=](https://generativelanguage.googleapis.com/v1beta/models?key=){$apiKey}");
+        if ($response->failed()) return 'models/gemini-1.5-flash';
 
         $data = $response->json();
         $models = $data['models'] ?? [];
@@ -222,7 +238,7 @@ class QuizController extends Controller
             }
         }
 
-        throw new \Exception("Tidak ada model AI yang tersedia.");
+        return 'models/gemini-pro';
     }
 
     public function show(Quiz $quiz): View
@@ -298,6 +314,13 @@ class QuizController extends Controller
         if ($quiz->user_id !== Auth::id()) abort(403);
         $quiz->delete();
         return redirect()->route('quizzes.index')->with('success', 'Kuis dihapus.');
+    }
+
+    public function destroyQuestion(Question $question): RedirectResponse
+    {
+        if ($question->quiz->user_id !== Auth::id()) abort(403);
+        $question->delete();
+        return back()->with('success', 'Soal berhasil dihapus.');
     }
 
     public function leaderboard(Quiz $quiz): View

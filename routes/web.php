@@ -63,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route Khusus User Biasa
     Route::middleware(['role:user'])->group(function () {
         Route::resource('quizzes', QuizController::class);
+        Route::delete('/questions/{question}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
 
         Route::get('/quizzes/{quiz}/leaderboard', [QuizController::class, 'leaderboard'])->name('quizzes.leaderboard');
         
