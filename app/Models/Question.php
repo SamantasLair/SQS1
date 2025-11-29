@@ -16,6 +16,7 @@ class Question extends Model
         'quiz_id',
         'question_text',
         'question_type',
+        'topic', 
     ];
 
     public function quiz(): BelongsTo

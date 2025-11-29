@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
-use Midtrans\Transaction as MidtransTransaction;
+use Midtrans\Notification;
 
 class PaymentController extends Controller
 {
@@ -22,12 +22,22 @@ class PaymentController extends Controller
         Config::$is3ds = config('midtrans.is_3ds') ?? env('MIDTRANS_IS_3DS', true);
     }
 
-    public function checkout()
+    public function checkout(Request $request)
     {
-        $user = Auth::user();
+        $plan = $request->query('plan');
         
-        $orderId = 'SQS-' . time() . '-' . Str::random(5);
-        $amount = 50000;
+        if (!in_array($plan, ['pro', 'premium'])) {
+            return redirect()->route('pricing.index')->with('error', 'Paket tidak valid.');
+        }
+
+        $user = Auth::user();
+        $orderId = 'SQS-' . strtoupper($plan) . '-' . time() . '-' . Str::random(5);
+        
+        $amount = match($plan) {
+            'pro' => 100000,
+            'premium' => 250000,
+            default => 100000
+        };
 
         $params = [
             'transaction_details' => [
@@ -38,6 +48,14 @@ class PaymentController extends Controller
                 'first_name' => $user->name,
                 'email' => $user->email,
             ],
+            'item_details' => [
+                [
+                    'id' => $plan . '_subscription',
+                    'price' => $amount,
+                    'quantity' => 1,
+                    'name' => 'Langganan ' . ucfirst($plan) . ' SQS',
+                ]
+            ]
         ];
 
         try {
@@ -52,50 +70,76 @@ class PaymentController extends Controller
             'amount' => $amount,
             'status' => 'pending',
             'snap_token' => $snapToken,
+            'metadata' => ['plan' => $plan]
         ]);
 
-        return view('payment.checkout', compact('snapToken', 'amount'));
+        return view('payment.checkout', compact('snapToken', 'amount', 'plan'));
     }
 
     public function success(Request $request)
     {
-        $orderId = $request->query('order_id');
-        
-        if (!$orderId) {
-            return redirect()->route('dashboard');
-        }
+        return redirect()->route('dashboard')->with('status', 'Pembayaran sedang diproses. Status akan otomatis berubah dalam beberapa saat.');
+    }
 
-        $transaction = Transaction::where('order_id', $orderId)->firstOrFail();
-
-        if ($transaction->status === 'success') {
-            return redirect()->route('dashboard')->with('status', 'Pembayaran Berhasil!');
-        }
-
+    public function callback(Request $request)
+    {
         try {
-            $midtransStatus = MidtransTransaction::status($orderId);
-            $transactionStatus = $midtransStatus->transaction_status;
-
-            if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
-                $transaction->update(['status' => 'success']);
-                
-                $user = User::find($transaction->user_id);
-                $user->update([
-                    'is_premium' => true,
-                    'ai_generation_limit' => 100
-                ]);
-
-                return redirect()->route('dashboard')->with('status', 'Selamat! Akun Premium Aktif.');
-            } 
-            elseif ($transactionStatus == 'expire' || $transactionStatus == 'cancel' || $transactionStatus == 'deny') {
-                $transaction->update(['status' => 'failed']);
-                return redirect()->route('dashboard')->with('error', 'Pembayaran Gagal atau Dibatalkan.');
-            }
-            else {
-                return redirect()->route('dashboard')->with('status', 'Pembayaran sedang diproses, silakan refresh nanti.');
-            }
-
+            $notif = new Notification();
         } catch (\Exception $e) {
-            return redirect()->route('dashboard')->with('error', 'Gagal memverifikasi status pembayaran.');
+            return response()->json(['message' => 'Notification Error'], 500);
+        }
+
+        $transaction = $notif->transaction_status;
+        $type = $notif->payment_type;
+        $orderId = $notif->order_id;
+        $fraud = $notif->fraud_status;
+
+        $dbTransaction = Transaction::where('order_id', $orderId)->first();
+
+        if (!$dbTransaction) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        if ($dbTransaction->status === 'success') {
+            return response()->json(['message' => 'Already processed']);
+        }
+
+        if ($transaction == 'capture') {
+            if ($type == 'credit_card') {
+                if ($fraud == 'challenge') {
+                    $dbTransaction->update(['status' => 'challenge']);
+                } else {
+                    $this->setSuccess($dbTransaction);
+                }
+            }
+        } else if ($transaction == 'settlement') {
+            $this->setSuccess($dbTransaction);
+        } else if ($transaction == 'pending') {
+            $dbTransaction->update(['status' => 'pending']);
+        } else if ($transaction == 'deny') {
+            $dbTransaction->update(['status' => 'failed']);
+        } else if ($transaction == 'expire') {
+            $dbTransaction->update(['status' => 'expired']);
+        } else if ($transaction == 'cancel') {
+            $dbTransaction->update(['status' => 'cancelled']);
+        }
+
+        return response()->json(['message' => 'Notification processed']);
+    }
+
+    private function setSuccess($transaction)
+    {
+        $transaction->update(['status' => 'success']);
+
+        $metadata = $transaction->metadata;
+        $newRole = $metadata['plan'] ?? 'pro';
+
+        $user = User::find($transaction->user_id);
+        if ($user) {
+            $user->update([
+                'role' => $newRole,
+                'is_premium' => true,
+            ]);
         }
     }
 }

@@ -27,11 +27,24 @@ class QuizAttemptController extends Controller
             'current_question_index' => 0,
         ]);
 
-        return redirect()->route('attempt.question.show', ['attempt' => $attempt->id]);
+        return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
     }
 
-    public function showQuestion(Request $request, QuizAttempt $attempt)
+    public function show(Request $request, Quiz $quiz, QuizAttempt $attempt)
     {
+        if ($attempt->user_id === Auth::id() && !is_null($attempt->score)) {
+            $totalQuestions = $attempt->quiz->questions->count();
+            $correctAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
+                ->whereHas('option', function ($query) {
+                    $query->where('is_correct', true);
+                })
+                ->count();
+
+            $score = $attempt->score;
+
+            return view('quizzes.attempt.result', compact('attempt', 'score', 'totalQuestions', 'correctAnswers'));
+        }
+
         $sessionData = $this->getSessionData($request, $attempt);
         if (!$sessionData) {
             return redirect()->route('dashboard')->with('error', 'Sesi kuis tidak ditemukan.');
@@ -42,10 +55,10 @@ class QuizAttemptController extends Controller
 
         $progress = ($sessionData['current_question_index'] + 1) . " / " . count($sessionData['question_ids']);
 
-        return view('quizzes.attempt.show', compact('attempt', 'question', 'progress'));
+        return view('quizzes.attempt.show', compact('quiz', 'attempt', 'question', 'progress'));
     }
 
-    public function storeAnswer(Request $request, QuizAttempt $attempt)
+    public function submit(Request $request, Quiz $quiz, QuizAttempt $attempt)
     {
         $request->validate(['option_id' => 'required|integer']);
 
@@ -66,38 +79,32 @@ class QuizAttemptController extends Controller
         $request->session()->put('quiz_attempt', $sessionData);
 
         if ($sessionData['current_question_index'] < count($sessionData['question_ids'])) {
-            return redirect()->route('attempt.question.show', ['attempt' => $attempt->id]);
+            return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
         } else {
-            return redirect()->route('attempt.result', ['attempt' => $attempt->id]);
-        }
-    }
+            $totalQuestions = $attempt->quiz->questions->count();
+            $correctAnswers = 0;
 
-    public function showResult(Request $request, QuizAttempt $attempt)
-    {
-        if ($attempt->user_id !== Auth::id()) {
-            abort(403);
-        }
+            $userAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
+                ->with('option')
+                ->get();
 
-        $totalQuestions = $attempt->quiz->questions->count();
-        $correctAnswers = 0;
-
-        $userAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
-            ->with('option')
-            ->get();
-
-        foreach ($userAnswers as $answer) {
-            if ($answer->option && $answer->option->is_correct) {
-                $correctAnswers++;
+            foreach ($userAnswers as $answer) {
+                if ($answer->option && $answer->option->is_correct) {
+                    $correctAnswers++;
+                }
             }
+
+            $score = ($totalQuestions > 0) ? ($correctAnswers / $totalQuestions) * 100 : 0;
+
+            $attempt->update([
+                'score' => $score,
+                'completed_at' => now(),
+            ]);
+
+            $request->session()->forget('quiz_attempt');
+
+            return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
         }
-
-        $score = ($totalQuestions > 0) ? ($correctAnswers / $totalQuestions) * 100 : 0;
-
-        $attempt->update(['score' => $score]);
-        
-        $request->session()->forget('quiz_attempt');
-
-        return view('quizzes.attempt.result', compact('attempt', 'score', 'totalQuestions', 'correctAnswers'));
     }
 
     private function getSessionData(Request $request, QuizAttempt $attempt)

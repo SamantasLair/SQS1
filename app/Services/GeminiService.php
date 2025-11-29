@@ -17,17 +17,18 @@ class GeminiService
 
     public function generateQuizFromText(string $text, int $amount = 5): array
     {
-        $prompt = "Buatkan {$amount} soal kuis pilihan ganda berdasarkan teks berikut. 
-        Format output WAJIB JSON murni tanpa markdown ```json atau kata-kata tambahan.
+        $prompt = "Buatkan {$amount} soal kuis (bisa pilihan ganda atau essay) berdasarkan teks berikut. 
+        Sertakan field 'topic' (1-2 kata) untuk setiap soal yang menggambarkan sub-bab materi tersebut.
+        Format output WAJIB JSON murni tanpa markdown ```json.
         Struktur JSON array object:
         [
             {
-                \"question\": \"Pertanyaan\",
+                \"question_text\": \"Pertanyaan\",
+                \"question_type\": \"multiple_choice\", 
+                \"topic\": \"Aljabar\",
                 \"options\": [
                     {\"text\": \"Pilihan A\", \"is_correct\": false},
-                    {\"text\": \"Pilihan B\", \"is_correct\": true},
-                    {\"text\": \"Pilihan C\", \"is_correct\": false},
-                    {\"text\": \"Pilihan D\", \"is_correct\": false}
+                    {\"text\": \"Pilihan B\", \"is_correct\": true}
                 ]
             }
         ]
@@ -35,17 +36,43 @@ class GeminiService
         Teks Materi:
         " . substr($text, 0, 30000);
 
+        return $this->makeRequest($prompt);
+    }
+
+    public function analyzeQuizResult(array $data, string $level): string
+    {
+        $prompt = "";
+        $jsonData = json_encode($data);
+
+        if ($level === 'diagnostic') {
+            $prompt = "Bertindaklah sebagai asisten guru. Analisis data nilai siswa berikut: {$jsonData}. 
+            Berikan laporan singkat per siswa tentang kekuatan dan kelemahan mereka berdasarkan topik soal (field 'topic'). 
+            Identifikasi siapa yang nilainya di bawah rata-rata. Jangan berikan saran materi, hanya diagnosa.";
+        } elseif ($level === 'remedial') {
+            $prompt = "Bertindaklah sebagai ahli kurikulum. Data: {$jsonData}. 
+            1. Identifikasi siswa yang lemah per topik. 
+            2. Analisis butir soal: Mengapa soal tertentu banyak yang salah? Analisis opsi pengecohnya. 
+            3. Berikan saran materi spesifik yang harus dijelaskan ulang di kelas dan strategi remedial.";
+        } elseif ($level === 'full_insight') {
+            $prompt = "Bertindaklah sebagai konsultan pendidikan senior. Data: {$jsonData}. 
+            Berikan analisis menyeluruh: Psikometrik soal, pola jawaban menebak (guessing pattern), rekomendasi kurikulum jangka panjang, dan personalisasi learning path untuk setiap siswa.";
+        }
+
+        if (empty($prompt)) {
+            return "Upgrade paket Anda untuk melihat analisis AI.";
+        }
+
+        $response = $this->makeRequest($prompt, false);
+        return is_string($response) ? $response : json_encode($response);
+    }
+
+    private function makeRequest(string $prompt, bool $expectJson = true)
+    {
         try {
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
             ])->post("{$this->baseUrl}?key={$this->apiKey}", [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt]
-                        ]
-                    ]
-                ],
+                'contents' => [['parts' => [['text' => $prompt]]]],
                 'generationConfig' => [
                     'temperature' => 0.7,
                     'topK' => 40,
@@ -56,20 +83,23 @@ class GeminiService
 
             if ($response->failed()) {
                 Log::error('Gemini API Error: ' . $response->body());
-                return [];
+                return $expectJson ? [] : 'Error generating content.';
             }
 
             $responseData = $response->json();
-            $generatedText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            $text = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '';
             
-            $jsonString = str_replace(['```json', '```'], '', $generatedText);
-            $questions = json_decode($jsonString, true);
+            if ($expectJson) {
+                $jsonString = str_replace(['```json', '```'], '', $text);
+                $result = json_decode($jsonString, true);
+                return is_array($result) ? $result : [];
+            }
 
-            return is_array($questions) ? $questions : [];
+            return $text;
 
         } catch (\Exception $e) {
             Log::error('Gemini Service Exception: ' . $e->getMessage());
-            return [];
+            return $expectJson ? [] : 'Service unavailable.';
         }
     }
 }
