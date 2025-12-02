@@ -91,13 +91,6 @@ class PaymentController extends Controller
     {
         $this->configureMidtrans();
 
-    // Debugging sementara 
-    Log::info('Midtrans Config:', [
-        'server_key_exists' => !empty(Config::$serverKey),
-        'server_key_prefix' => substr(Config::$serverKey, 0, 5), // Cek apakah SB-Mid
-        'is_production' => Config::$isProduction
-    ]);
-
         try {
             $notif = new Notification();
         } catch (\Exception $e) {
