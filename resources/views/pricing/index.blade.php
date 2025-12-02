@@ -65,6 +65,12 @@
             <main class="flex-grow pt-32 pb-24">
                 <div class="container mx-auto max-w-7xl px-6 lg:px-8">
                     
+                    @if(session('error'))
+                        <div class="max-w-3xl mx-auto mb-10 bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
+                            <p class="text-red-400 font-semibold">{{ session('error') }}</p>
+                        </div>
+                    @endif
+                    
                     <div class="text-center max-w-3xl mx-auto mb-20 relative">
                         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
                         <h2 class="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight relative z-10 leading-tight">
@@ -117,8 +123,8 @@
                                                 Paket Saat Ini
                                             </button>
                                         @elseif(auth()->check())
-                                            <button disabled class="w-full py-3 rounded-xl bg-transparent text-gray-600 text-sm font-medium border border-gray-800 cursor-default">
-                                                Basic
+                                            <button disabled class="w-full py-3 rounded-xl bg-transparent text-gray-600 text-sm font-medium border border-gray-800 cursor-default opacity-50">
+                                                Tercakup
                                             </button>
                                         @else
                                             <a href="{{ route('register') }}" class="block w-full py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-center text-sm font-medium transition-all duration-300 border border-gray-700">
@@ -220,7 +226,11 @@
                                     </ul>
 
                                     <div class="mt-auto relative z-10">
-                                        @if(auth()->check() && auth()->user()->role === 'pro')
+                                        @if(auth()->check() && auth()->user()->role === 'premium')
+                                            <button disabled class="w-full py-3.5 rounded-xl bg-[#1a142e] text-indigo-400/50 font-bold border border-indigo-500/10 cursor-default">
+                                                Termasuk dalam Premium
+                                            </button>
+                                        @elseif(auth()->check() && auth()->user()->role === 'pro')
                                             <button disabled class="w-full py-3.5 rounded-xl bg-[#1a142e] text-indigo-400 font-bold border border-indigo-500/30 cursor-default">
                                                 Paket Saat Ini
                                             </button>

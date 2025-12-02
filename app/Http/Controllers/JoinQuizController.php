@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quiz;
-use Illuminate\Http\Request;
+use App\Http\Requests\JoinQuizRequest;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -14,14 +14,14 @@ class JoinQuizController extends Controller
         return view('quizzes.join');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(JoinQuizRequest $request): RedirectResponse
     {
-        $request->validate([
-            'join_code' => ['required', 'string', 'exists:quizzes,join_code'],
-        ]);
+        $quiz = Quiz::where('join_code', $request->join_code)->first();
 
-        $quiz = Quiz::where('join_code', $request->join_code)->firstOrFail();
-
+        // Optional: Add logic here if you need to check if user already joined
+        // or if the quiz is closed, etc.
+        
+        // Redirect to quiz detail (Lobby)
         return redirect()->route('quizzes.show', $quiz);
     }
 }

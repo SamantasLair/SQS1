@@ -37,6 +37,15 @@ class PaymentController extends Controller
         }
 
         $user = Auth::user();
+
+        if ($user->role === 'premium') {
+            return redirect()->route('pricing.index')->with('error', 'Anda sudah memiliki paket tertinggi (Premium). Downgrade tidak tersedia.');
+        }
+
+        if ($user->role === 'pro' && $plan === 'pro') {
+            return redirect()->route('pricing.index')->with('error', 'Anda sudah berlangganan paket Pro.');
+        }
+        
         $orderId = 'SQS-' . strtoupper($plan) . '-' . time() . '-' . Str::random(5);
         
         $amount = match($plan) {
