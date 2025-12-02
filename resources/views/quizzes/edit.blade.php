@@ -1,4 +1,6 @@
 <x-app-layout>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+
     <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center gap-4">
@@ -26,7 +28,40 @@
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
         .math-preview { min-height: 1.5rem; }
+
+        /* Override Tailwind Prose styles untuk Highlight.js */
+        .prose pre {
+            background-color: #282c34 !important;
+            color: #abb2bf !important;
+            padding: 0 !important;
+            margin: 1em 0 !important;
+            border-radius: 0.75rem !important;
+            overflow-x: auto;
+        }
+
+        .prose pre code {
+            background-color: transparent !important;
+            color: inherit !important;
+            font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+            padding: 1.25rem !important;
+            border: none !important;
+            display: block !important;
+            font-size: 0.875rem !important;
+            line-height: 1.7 !important;
+        }
+
+        .prose code::before,
+        .prose code::after {
+            content: "" !important;
+            display: none !important;
+        }
     </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
 
     <script>
         window.MathJax = {
@@ -35,14 +70,26 @@
             startup: {
                 ready: () => {
                     MathJax.startup.defaultReady();
-                    window.renderMath = (elemId, text) => {
+                    // Fungsi render gabungan: MathJax + Highlight.js
+                    window.updatePreview = (elemId, text) => {
                         const output = document.getElementById(elemId);
                         output.innerHTML = text;
+                        
+                        // Render Math
                         MathJax.typesetPromise([output]).catch((err) => console.log(err));
+                        
+                        // Render Code Highlighting
+                        output.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
                     };
                 }
             }
         };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            hljs.highlightAll();
+        });
 
         // Fungsi Salin Kode dengan Toast SweetAlert
         function copyCode(code) {
@@ -123,8 +170,11 @@
                     <div class="lg:col-span-2 space-y-6">
                         <div class="flex items-center justify-between">
                             <h3 class="text-xl font-bold text-white">Daftar Soal ({{ $quiz->questions->count() }})</h3>
-                            <div class="text-xs text-gray-400 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">
-                                Info: Gunakan LaTeX (<code>$\sqrt{x}$</code>) untuk matematika.
+                            <div class="text-xs text-gray-400 bg-gray-900/50 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">
+                                <span class="flex items-center gap-1">
+                                    <strong class="text-indigo-400">Info:</strong>
+                                    Gunakan <code>$ $</code> untuk rumus & <code>&lt;pre&gt;&lt;code&gt; &lt;/code&gt;&lt;pre&gt;</code> untuk kode.
+                                </span>
                             </div>
                         </div>
 
@@ -153,13 +203,13 @@
                                         name="questions[{{ $i }}][text]" 
                                         rows="3" 
                                         class="block w-full rounded-lg bg-gray-900 border-gray-600 text-white text-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder-gray-600"
-                                        oninput="window.renderMath('preview-q-{{ $i }}', this.value)"
+                                        oninput="window.updatePreview('preview-q-{{ $i }}', this.value)"
                                     >{{ $question->question_text }}</textarea>
                                 </div>
                                 <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50 flex flex-col justify-center">
                                     <label class="block text-[10px] font-bold text-indigo-400 uppercase mb-1">Preview:</label>
                                     <div id="preview-q-{{ $i }}" class="text-gray-200 text-sm math-preview prose prose-invert max-w-none">
-                                        {{ $question->question_text }}
+                                        {!! $question->question_text !!}
                                     </div>
                                 </div>
                             </div>

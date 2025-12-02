@@ -1,4 +1,35 @@
 <x-app-layout>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
+    <style>
+        .prose pre {
+            background-color: #282c34 !important;
+            color: #abb2bf !important;
+            padding: 0 !important;
+            margin: 1em 0 !important;
+            border-radius: 0.75rem !important;
+            overflow-x: auto;
+        }
+
+        .prose pre code {
+            background-color: transparent !important;
+            color: inherit !important;
+            font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+            padding: 1.25rem !important;
+            border: none !important;
+            display: block !important;
+            font-size: 0.875rem !important;
+            line-height: 1.7 !important;
+        }
+
+        /* Hilangkan backtick (`) default dari prose jika ada */
+        .prose code::before,
+        .prose code::after {
+            content: "" !important;
+            display: none !important;
+        }
+    </style>
+
     <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center gap-4">
@@ -31,7 +62,17 @@
         </div>
     </x-slot>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            hljs.highlightAll();
+        });
+
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -92,7 +133,7 @@
                         </div>
                         <div class="grow">
                             <div class="text-lg font-medium mb-6 text-gray-100 prose prose-invert max-w-none">
-                                {{ $question->question_text }}
+                                {!! $question->question_text !!}
                             </div>
                             
                             @if($question->question_type === 'multiple_choice')

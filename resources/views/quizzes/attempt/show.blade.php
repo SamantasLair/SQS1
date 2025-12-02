@@ -4,7 +4,7 @@
     <style>
         /* 2. Override Tailwind Prose styles agar tidak konflik dengan Highlight.js */
         .prose pre {
-            background-color: #282c34 !important; /* Warna background Atom One Dark */
+            background-color: #282c34 !important;
             color: #abb2bf !important;
             padding: 0 !important;
             margin: 1em 0 !important;
@@ -18,7 +18,7 @@
             font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
             padding: 1.25rem !important;
             border: none !important;
-            display: block !important; /* Pastikan code block memanjang */
+            display: block !important;
             font-size: 0.875rem !important;
             line-height: 1.7 !important;
         }
@@ -50,6 +50,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
     
     <script>
         window.MathJax = {
@@ -64,7 +65,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 4. Inisialisasi Highlight.js
             hljs.highlightAll();
 
             let duration = {{ $quiz->timer }} * 60; 
