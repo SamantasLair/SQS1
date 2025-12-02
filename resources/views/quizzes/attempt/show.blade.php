@@ -72,7 +72,7 @@
 
                         <div class="ml-4 mt-2">
                             <div class="text-lg font-medium text-white mb-6 leading-relaxed prose prose-invert max-w-none">
-                                {{ $question->question_text }}
+                                {!! $question->question_text !!}
                             </div>
 
                             @if($question->question_type === 'multiple_choice')

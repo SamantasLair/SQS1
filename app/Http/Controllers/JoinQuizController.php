@@ -16,12 +16,7 @@ class JoinQuizController extends Controller
 
     public function store(JoinQuizRequest $request): RedirectResponse
     {
-        $quiz = Quiz::where('join_code', $request->join_code)->first();
-
-        // Optional: Add logic here if you need to check if user already joined
-        // or if the quiz is closed, etc.
-        
-        // Redirect to quiz detail (Lobby)
+        $quiz = Quiz::where('join_code', $request->code)->firstOrFail();
         return redirect()->route('quizzes.show', $quiz);
     }
 }

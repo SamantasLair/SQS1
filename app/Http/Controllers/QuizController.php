@@ -135,19 +135,16 @@ class QuizController extends Controller
 
         $finalPrompt = "You are a teacher creating a quiz. Create {$qCount} {$qType} questions based on the context provided.
         
-        RULES FOR MATHEMATICS VS CODE:
-        1. If the context is MATHEMATICS or PHYSICS: You MUST wrap all formulas, equations, variables, and numbers with exponents in LaTeX delimiters using single dollar signs. 
-           Example: Use '\$x^2 + y^2 = z^2\$' instead of 'x^2 + y^2 = z^2'. Use '\$\\sqrt{144}\$' for roots.
-        2. If the context is COMPUTER SCIENCE / PROGRAMMING / LOGIC: Do NOT use LaTeX for code syntax or logical operators unless it is a mathematical formula.
-           Example: 'Use the ^ operator for XOR' (Keep as is, DO NOT wrap in dollar signs).
-           Example: 'The complexity is \$O(n^2)\$' (Wrap this because it is math notation).
-        3. Output format: JSON Array of Objects (RFC 8259 compatible). NO Markdown formatting (do not use ```json).
-        4. Language: Indonesian.
-        5. Escape backslashes in JSON properly (e.g. use '\\\\' for LaTeX commands).
+        RULES FOR FORMATTING:
+        1. MATHEMATICS/PHYSICS: WRAP all formulas in single dollar signs ($...$). Example: \$x^2 + y^2 = z^2\$.
+        2. CODE SNIPPETS: WRAP all code in HTML <pre><code> tags. Do NOT use markdown backticks.
+        Example: What is the output of <pre><code class='language-python'>print('Hello')</code></pre>?
+        3. GENERAL TEXT: Do NOT use markdown for bold/italic/headers. Keep it plain text.
+        4. JSON Output: Return purely the JSON structure requested below.
 
         JSON Structure for multiple_choice:
         [{\"question\": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"correct_index\": 0}]
-        
+                
         JSON Structure for essay:
         [{\"question\": \"...\", \"options\": [], \"correct_index\": null}]
 

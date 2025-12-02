@@ -9,7 +9,7 @@
         <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600/80 via-indigo-600/80 to-purple-600/80 p-8 shadow-2xl backdrop-blur-sm border border-white/10">
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="text-white">
-                    <h3 class="text-4xl font-black tracking-tight mb-2">Halo, {{ Auth::user()->name }}! 🚀</h3>
+                    <h3 class="text-4xl font-black tracking-tight mb-2">Halo, {{ Auth::user()->name }}!</h3>
                     <p class="text-indigo-100 text-lg font-light">Hari yang indah untuk belajar sesuatu yang baru.</p>
                 </div>
                 <div class="flex flex-wrap gap-4">
