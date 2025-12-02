@@ -1,4 +1,36 @@
 <x-app-layout>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
+    <style>
+        /* 2. Override Tailwind Prose styles agar tidak konflik dengan Highlight.js */
+        .prose pre {
+            background-color: #282c34 !important; /* Warna background Atom One Dark */
+            color: #abb2bf !important;
+            padding: 0 !important;
+            margin: 1em 0 !important;
+            border-radius: 0.75rem !important;
+            overflow-x: auto;
+        }
+
+        .prose pre code {
+            background-color: transparent !important;
+            color: inherit !important;
+            font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+            padding: 1.25rem !important;
+            border: none !important;
+            display: block !important; /* Pastikan code block memanjang */
+            font-size: 0.875rem !important;
+            line-height: 1.7 !important;
+        }
+
+        /* Hilangkan backtick (`) default dari prose jika ada */
+        .prose code::before,
+        .prose code::after {
+            content: "" !important;
+            display: none !important;
+        }
+    </style>
+
     <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -14,6 +46,11 @@
         </div>
     </x-slot>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    
     <script>
         window.MathJax = {
             tex: {
@@ -27,6 +64,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 4. Inisialisasi Highlight.js
+            hljs.highlightAll();
+
             let duration = {{ $quiz->timer }} * 60; 
             const display = document.querySelector('#timer-display');
             
@@ -71,9 +111,9 @@
                         </div>
 
                         <div class="ml-4 mt-2">
-                            <div class="text-lg font-medium text-white mb-6 leading-relaxed prose prose-invert max-w-none">
-                                {!! $question->question_text !!}
-                            </div>
+                        <div class="text-lg font-medium text-white mb-6 leading-relaxed prose prose-invert max-w-none">
+                            {!! $question->question_text !!}
+                        </div>
 
                             @if($question->question_type === 'multiple_choice')
                                 <div class="space-y-3">

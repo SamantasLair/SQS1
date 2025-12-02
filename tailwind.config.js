@@ -1,5 +1,6 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
+import typography from '@tailwindcss/typography'; // Tambahkan ini
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -8,7 +9,6 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
     ],
-
     theme: {
         extend: {
             fontFamily: {
@@ -16,6 +16,5 @@ export default {
             },
         },
     },
-
-    plugins: [forms],
+    plugins: [forms, typography], // Tambahkan typography di sini
 };
