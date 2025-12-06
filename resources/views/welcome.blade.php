@@ -63,15 +63,12 @@
                     <div class="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none"></div>
 
                     <div class="container mx-auto max-w-7xl px-6 lg:px-8 relative z-10 text-center">
-                        <span class="inline-block py-1 px-3 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-6 backdrop-blur-sm">
-                            ✨ Platform Kuis AI Tercanggih
-                        </span>
                         <h1 class="text-5xl sm:text-7xl font-extrabold text-white tracking-tight leading-tight mb-8">
-                            Ujian Tanpa Batas <br>
-                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Dengan Kekuatan AI</span>
+                            Uji Pengetahuan Anda <br>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Raih Hasil Maksimal</span>
                         </h1>
                         <p class="mt-6 text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-                            Buat kuis dari materi PDF dalam hitungan detik menggunakan Gemini AI. Bagikan kode unik dan tantang temanmu sekarang juga.
+                            Kelola materi ujian dengan sistem yang terstruktur. Bagikan kode unik kepada peserta, kerjakan soal, dan pantau hasil evaluasi secara mendalam.
                         </p>
                         <div class="flex flex-col sm:flex-row gap-4 justify-center">
                             <a href="{{ route('register') }}" class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
@@ -93,7 +90,7 @@
                             </div>
                             <div>
                                 <h3 class="text-3xl font-bold text-white mb-1">1M+</h3>
-                                <p class="text-gray-500 text-sm">Pertanyaan AI</p>
+                                <p class="text-gray-500 text-sm">Bank Soal</p>
                             </div>
                             <div>
                                 <h3 class="text-3xl font-bold text-white mb-1">4.9</h3>
@@ -109,16 +106,16 @@
                     <div class="container mx-auto max-w-7xl px-6 lg:px-8">
                         <div class="text-center max-w-3xl mx-auto mb-16">
                             <h2 class="text-3xl font-bold text-white mb-6">Mengapa Memilih SQS?</h2>
-                            <p class="text-gray-400 text-lg">Kami menggabungkan kemudahan penggunaan dengan teknologi AI canggih untuk pengalaman belajar yang tak tertandingi.</p>
+                            <p class="text-gray-400 text-lg">Kami menyediakan sistem manajemen evaluasi yang handal dan mudah digunakan untuk pengalaman belajar yang optimal.</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div class="p-8 rounded-3xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-indigo-500/50 transition-colors duration-300">
                                 <div class="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 mb-6">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                 </div>
-                                <h3 class="text-xl font-bold text-white mb-3">AI Generator</h3>
-                                <p class="text-gray-400 leading-relaxed">Tidak perlu repot mengetik soal. Upload PDF materi Anda, dan biarkan AI kami membuatkan kuis lengkap dalam hitungan detik.</p>
+                                <h3 class="text-xl font-bold text-white mb-3">Manajemen Materi</h3>
+                                <p class="text-gray-400 leading-relaxed">Susun materi ujian dengan format yang fleksibel dan terorganisir. Simpan bank soal Anda untuk digunakan kembali kapan saja.</p>
                             </div>
 
                             <div class="p-8 rounded-3xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-purple-500/50 transition-colors duration-300">
@@ -126,15 +123,15 @@
                                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </div>
                                 <h3 class="text-xl font-bold text-white mb-3">Fleksibilitas Waktu</h3>
-                                <p class="text-gray-400 leading-relaxed">Atur durasi pengerjaan sesuai kebutuhan. Peserta dapat mengerjakan kuis kapan saja selama kode akses masih valid.</p>
+                                <p class="text-gray-400 leading-relaxed">Atur durasi pengerjaan sesuai kebutuhan kurikulum. Peserta dapat mengerjakan kuis dalam rentang waktu yang telah ditentukan.</p>
                             </div>
 
                             <div class="p-8 rounded-3xl bg-gradient-to-b from-white/5 to-transparent border border-white/10 hover:border-pink-500/50 transition-colors duration-300">
                                 <div class="w-14 h-14 bg-pink-500/20 rounded-2xl flex items-center justify-center text-pink-400 mb-6">
                                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                                 </div>
-                                <h3 class="text-xl font-bold text-white mb-3">Leaderboard Live</h3>
-                                <p class="text-gray-400 leading-relaxed">Pantau skor peserta secara real-time. Tumbuhkan semangat kompetisi sehat dengan papan peringkat yang interaktif.</p>
+                                <h3 class="text-xl font-bold text-white mb-3">Analisis Skor</h3>
+                                <p class="text-gray-400 leading-relaxed">Dapatkan laporan hasil yang akurat. Pantau perkembangan nilai peserta melalui papan peringkat dan riwayat pengerjaan.</p>
                             </div>
                         </div>
                     </div>
@@ -152,7 +149,7 @@
                                         </div>
                                         <div>
                                             <h4 class="text-lg font-bold text-white mb-2">Hemat Biaya & Gratis</h4>
-                                            <p class="text-gray-400 leading-relaxed">Mulai gunakan platform ini tanpa biaya sepeserpun. Fitur dasar kami cukup untuk kebutuhan kelas dan kelompok belajar Anda.</p>
+                                            <p class="text-gray-400 leading-relaxed">Mulai gunakan platform ini tanpa biaya. Fitur dasar kami memadai untuk kebutuhan kelas dan kelompok belajar.</p>
                                         </div>
                                     </div>
                                     
@@ -162,7 +159,7 @@
                                         </div>
                                         <div>
                                             <h4 class="text-lg font-bold text-white mb-2">Sangat Interaktif</h4>
-                                            <p class="text-gray-400 leading-relaxed">Desain antarmuka yang menarik membuat pengerjaan kuis tidak membosankan. Cocok untuk Gen Z dan Milenial.</p>
+                                            <p class="text-gray-400 leading-relaxed">Desain antarmuka yang intuitif memudahkan pengguna dalam navigasi dan pengerjaan soal ujian.</p>
                                         </div>
                                     </div>
 
@@ -172,7 +169,7 @@
                                         </div>
                                         <div>
                                             <h4 class="text-lg font-bold text-white mb-2">Tanpa Instalasi</h4>
-                                            <p class="text-gray-400 leading-relaxed">Berbasis web sepenuhnya. Tidak perlu download aplikasi berat. Cukup browser dan koneksi internet.</p>
+                                            <p class="text-gray-400 leading-relaxed">Berbasis web sepenuhnya. Tidak perlu mengunduh aplikasi tambahan. Cukup gunakan browser Anda.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -186,7 +183,7 @@
                                             <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
                                             <div class="h-3 w-3 rounded-full bg-green-500"></div>
                                         </div>
-                                        <span class="text-xs text-gray-500 font-mono">live_preview.blade.php</span>
+                                        <span class="text-xs text-gray-500 font-mono">dashboard_preview.blade.php</span>
                                     </div>
                                     <div class="space-y-4">
                                         <div class="h-8 bg-white/5 rounded w-3/4"></div>
@@ -210,7 +207,7 @@
                         <div class="flex justify-between items-end mb-12">
                             <div>
                                 <h2 class="text-3xl font-bold text-white mb-2">Kuis Populer</h2>
-                                <p class="text-gray-400">Kuis yang paling banyak dimainkan minggu ini.</p>
+                                <p class="text-gray-400">Kuis yang paling banyak diikuti minggu ini.</p>
                             </div>
                         </div>
                         
@@ -236,7 +233,7 @@
                                     </div>
                                     
                                     <a href="{{ route('quizzes.start', $quiz) }}" class="block w-full py-3 text-center bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 font-semibold rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-200">
-                                        Mainkan Kuis
+                                        Mulai Kuis
                                     </a>
                                 </div>
                             @empty
@@ -254,12 +251,12 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                             <div>
                                 <span class="text-indigo-400 font-bold tracking-wider uppercase text-sm">Tentang Kami</span>
-                                <h2 class="text-4xl font-bold text-white mt-2 mb-6">Revolusi Cara Belajar Anda</h2>
+                                <h2 class="text-4xl font-bold text-white mt-2 mb-6">Revolusi Sistem Evaluasi</h2>
                                 <p class="text-gray-400 text-lg mb-6 leading-relaxed">
-                                    SQS (Sistem Quiz Semalam) hadir untuk menjawab tantangan pendidikan modern. Kami percaya bahwa evaluasi pembelajaran tidak harus membosankan. Dengan menggabungkan teknologi AI terbaru, kami membantu pengajar membuat materi berkualitas dalam hitungan detik.
+                                    SQS (Sistem Quiz Semalam) hadir sebagai solusi manajemen evaluasi pembelajaran. Kami percaya bahwa proses penilaian tidak harus rumit. Dengan sistem yang terintegrasi, kami membantu pengajar menyusun materi berkualitas secara efisien.
                                 </p>
                                 <p class="text-gray-400 text-lg mb-8 leading-relaxed">
-                                    Visi kami adalah menciptakan ekosistem belajar yang kolaboratif, menyenangkan, dan dapat diakses oleh siapa saja, di mana saja.
+                                    Visi kami adalah menciptakan ekosistem belajar yang kolaboratif, transparan, dan dapat diakses oleh siapa saja, di mana saja.
                                 </p>
                                 <a href="{{ route('register') }}" class="inline-flex items-center text-white font-bold hover:text-indigo-300 transition-colors">
                                     Bergabung dengan Komunitas
@@ -269,19 +266,19 @@
                             <div class="grid grid-cols-2 gap-6">
                                 <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
                                     <h4 class="text-3xl font-bold text-indigo-400 mb-1">100%</h4>
-                                    <p class="text-sm text-gray-400">Gratis Selamanya</p>
+                                    <p class="text-sm text-gray-400">Akses Mudah</p>
                                 </div>
                                 <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
                                     <h4 class="text-3xl font-bold text-purple-400 mb-1">24/7</h4>
-                                    <p class="text-sm text-gray-400">Akses Kapan Saja</p>
+                                    <p class="text-sm text-gray-400">Siap Digunakan</p>
                                 </div>
                                 <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
-                                    <h4 class="text-3xl font-bold text-pink-400 mb-1">Fast</h4>
+                                    <h4 class="text-3xl font-bold text-pink-400 mb-1">Cepat</h4>
                                     <p class="text-sm text-gray-400">Performa Tinggi</p>
                                 </div>
                                 <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
-                                    <h4 class="text-3xl font-bold text-blue-400 mb-1">Secure</h4>
-                                    <p class="text-sm text-gray-400">Data Aman</p>
+                                    <h4 class="text-3xl font-bold text-blue-400 mb-1">Aman</h4>
+                                    <p class="text-sm text-gray-400">Data Terlindungi</p>
                                 </div>
                             </div>
                         </div>
@@ -292,9 +289,9 @@
                     <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-20"></div>
                     <div class="container mx-auto max-w-7xl px-6 lg:px-8 relative z-10 text-center">
                         <h2 class="text-4xl font-bold text-white mb-6">Siap Membuat Kuis Pertama Anda?</h2>
-                        <p class="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto">Bergabunglah dengan ribuan pengajar dan pelajar lainnya. Gratis, mudah, dan menyenangkan.</p>
+                        <p class="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto">Bergabunglah dengan pengajar dan pelajar lainnya untuk pengalaman evaluasi yang lebih baik.</p>
                         <a href="{{ route('register') }}" class="inline-block px-10 py-4 bg-white text-indigo-700 font-bold rounded-2xl shadow-xl hover:shadow-2xl hover:bg-gray-100 hover:scale-105 transition-all duration-300">
-                            Buat Akun Gratis
+                            Buat Akun
                         </a>
                     </div>
                 </section>
@@ -312,7 +309,7 @@
                                 <span class="text-xl font-bold text-white">SQS</span>
                             </div>
                             <p class="text-gray-400 leading-relaxed max-w-sm">
-                                Platform kuis modern yang memanfaatkan kekuatan Artificial Intelligence untuk membantu Anda belajar dan mengajar lebih efektif.
+                                Platform manajemen kuis modern yang dirancang untuk membantu Anda melakukan evaluasi dan pembelajaran secara efektif dan efisien.
                             </p>
                         </div>
                         <div>

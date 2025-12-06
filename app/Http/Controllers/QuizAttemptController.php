@@ -14,8 +14,19 @@ class QuizAttemptController extends Controller
 {
     public function start(Request $request, Quiz $quiz)
     {
+        $userId = Auth::id();
+        $guestName = null;
+
+        if (!$userId) {
+            $guestName = session('guest_name');
+            if (!$guestName) {
+                return redirect()->route('quizzes.join')->with('error', 'Silakan masukkan nama Anda terlebih dahulu.');
+            }
+        }
+
         $attempt = QuizAttempt::create([
-            'user_id' => Auth::id(),
+            'user_id' => $userId,
+            'guest_name' => $guestName,
             'quiz_id' => $quiz->id,
         ]);
 
@@ -25,6 +36,7 @@ class QuizAttemptController extends Controller
             'attempt_id' => $attempt->id,
             'question_ids' => $questionIds,
             'current_question_index' => 0,
+            'is_guest' => !$userId
         ]);
 
         return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
@@ -32,22 +44,13 @@ class QuizAttemptController extends Controller
 
     public function show(Request $request, Quiz $quiz, QuizAttempt $attempt)
     {
-        if ($attempt->user_id === Auth::id() && !is_null($attempt->score)) {
-            $totalQuestions = $attempt->quiz->questions->count();
-            $correctAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
-                ->whereHas('option', function ($query) {
-                    $query->where('is_correct', true);
-                })
-                ->count();
-
-            $score = $attempt->score;
-
-            return view('quizzes.attempt.result', compact('attempt', 'score', 'totalQuestions', 'correctAnswers'));
+        if ($this->isAttemptCompleted($attempt)) {
+            return $this->showResult($attempt);
         }
 
         $sessionData = $this->getSessionData($request, $attempt);
         if (!$sessionData) {
-            return redirect()->route('dashboard')->with('error', 'Sesi kuis tidak ditemukan.');
+            return redirect()->route('quizzes.join')->with('error', 'Sesi kuis tidak valid atau kadaluarsa.');
         }
 
         $questionId = $sessionData['question_ids'][$sessionData['current_question_index']];
@@ -64,7 +67,7 @@ class QuizAttemptController extends Controller
 
         $sessionData = $this->getSessionData($request, $attempt);
         if (!$sessionData) {
-            return redirect()->route('dashboard')->with('error', 'Sesi kuis tidak ditemukan.');
+            return redirect()->route('quizzes.join')->with('error', 'Sesi kuis tidak valid.');
         }
 
         $questionId = $sessionData['question_ids'][$sessionData['current_question_index']];
@@ -81,28 +84,8 @@ class QuizAttemptController extends Controller
         if ($sessionData['current_question_index'] < count($sessionData['question_ids'])) {
             return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
         } else {
-            $totalQuestions = $attempt->quiz->questions->count();
-            $correctAnswers = 0;
-
-            $userAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
-                ->with('option')
-                ->get();
-
-            foreach ($userAnswers as $answer) {
-                if ($answer->option && $answer->option->is_correct) {
-                    $correctAnswers++;
-                }
-            }
-
-            $score = ($totalQuestions > 0) ? ($correctAnswers / $totalQuestions) * 100 : 0;
-
-            $attempt->update([
-                'score' => $score,
-                'completed_at' => now(),
-            ]);
-
+            $this->calculateScore($attempt);
             $request->session()->forget('quiz_attempt');
-
             return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
         }
     }
@@ -111,11 +94,60 @@ class QuizAttemptController extends Controller
     {
         $sessionData = $request->session()->get('quiz_attempt');
 
-        if (!$sessionData || $sessionData['attempt_id'] != $attempt->id || $attempt->user_id !== Auth::id()) {
-            $request->session()->forget('quiz_attempt');
+        if (!$sessionData || $sessionData['attempt_id'] != $attempt->id) {
+            return null;
+        }
+
+        if (Auth::check() && $attempt->user_id !== Auth::id()) {
             return null;
         }
 
         return $sessionData;
+    }
+
+    private function isAttemptCompleted(QuizAttempt $attempt)
+    {
+        if (Auth::check()) {
+            return $attempt->user_id === Auth::id() && !is_null($attempt->score);
+        }
+        
+        return !is_null($attempt->score) && session('quiz_attempt.attempt_id') == $attempt->id;
+    }
+
+    private function showResult(QuizAttempt $attempt)
+    {
+        $totalQuestions = $attempt->quiz->questions->count();
+        $correctAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
+            ->whereHas('option', function ($query) {
+                $query->where('is_correct', true);
+            })
+            ->count();
+
+        $score = $attempt->score;
+
+        return view('quizzes.attempt.result', compact('attempt', 'score', 'totalQuestions', 'correctAnswers'));
+    }
+
+    private function calculateScore(QuizAttempt $attempt)
+    {
+        $totalQuestions = $attempt->quiz->questions->count();
+        $correctAnswers = 0;
+
+        $userAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
+            ->with('option')
+            ->get();
+
+        foreach ($userAnswers as $answer) {
+            if ($answer->option && $answer->option->is_correct) {
+                $correctAnswers++;
+            }
+        }
+
+        $score = ($totalQuestions > 0) ? ($correctAnswers / $totalQuestions) * 100 : 0;
+
+        $attempt->update([
+            'score' => $score,
+            'completed_at' => now(),
+        ]);
     }
 }

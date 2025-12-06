@@ -178,6 +178,10 @@
                                             <button disabled class="w-full py-3 rounded-xl bg-blue-900/30 text-blue-400 text-sm font-bold border border-blue-900/50 cursor-default">
                                                 Paket Saat Ini
                                             </button>
+                                        @elseif(auth()->check() && (auth()->user()->role === 'premium' || auth()->user()->role === 'pro'))
+                                            <button disabled class="w-full py-3 rounded-xl bg-blue-900/20 text-blue-400/50 text-sm font-bold border border-blue-900/30 cursor-default">
+                                                Tercakup
+                                            </button>
                                         @else
                                             <button class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-center text-sm font-bold transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-600/40">
                                                 Ajukan Verifikasi

@@ -36,37 +36,49 @@
                 display: none !important;
             }
 
-            body .swal2-popup.achievement-toast {
+            body .swal2-popup.system-toast {
                 display: flex !important;
                 flex-direction: row !important;
                 align-items: center !important;
-                background: linear-gradient(145deg, #1e293b, #0f172a) !important;
-                border-left: 4px solid #4ade80 !important;
-                border-radius: 4px !important;
+                background: #1e293b !important;
+                border-radius: 8px !important;
                 padding: 1rem !important;
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
-                width: 350px !important;
+                width: auto !important;
+                min-width: 300px !important;
+                max-width: 450px !important;
             }
 
-            body .swal2-popup.achievement-toast .swal2-icon {
+            body .swal2-popup.system-toast.toast-success {
+                border-left: 4px solid #10b981 !important;
+            }
+
+            body .swal2-popup.system-toast.toast-danger {
+                border-left: 4px solid #ef4444 !important;
+            }
+
+            body .swal2-popup.system-toast .swal2-icon {
                 margin: 0 12px 0 0 !important;
-                width: 40px !important;
-                height: 40px !important;
+                width: 24px !important;
+                height: 24px !important;
                 border: none !important;
-                background: rgba(74, 222, 128, 0.2) !important;
-                border-radius: 50% !important;
+                background: transparent !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
             }
             
-            body .swal2-popup.achievement-toast .swal2-icon .swal2-icon-content {
-                font-size: 1.5rem !important;
-                color: #4ade80 !important;
-                font-weight: bold !important;
+            body .swal2-popup.system-toast.toast-success .swal2-icon-content {
+                font-size: 1.25rem !important;
+                color: #10b981 !important;
             }
 
-            body .swal2-popup.achievement-toast .swal2-html-container {
+            body .swal2-popup.system-toast.toast-danger .swal2-icon-content {
+                font-size: 1.25rem !important;
+                color: #ef4444 !important;
+            }
+
+            body .swal2-popup.system-toast .swal2-html-container {
                 margin: 0 !important;
                 padding: 0 !important;
                 display: flex !important;
@@ -74,20 +86,18 @@
                 align-items: flex-start !important;
             }
 
-            .achievement-title {
-                font-size: 0.85rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                color: #e2e8f0;
-                line-height: 1;
-                margin-bottom: 4px;
+            .toast-title {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #f1f5f9;
+                line-height: 1.2;
+                margin-bottom: 2px;
             }
 
-            .achievement-desc {
+            .toast-message {
                 font-size: 0.8rem;
                 color: #94a3b8;
-                line-height: 1.2;
+                line-height: 1.4;
             }
         </style>
 
@@ -170,43 +180,46 @@
                 });
             })();
 
-            const AchievementToast = Swal.mixin({
+            const SystemToast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 4000,
-                timerProgressBar: false,
-                customClass: {
-                    popup: 'achievement-toast',
-                },
-                showClass: {
-                    popup: 'animate__animated animate__fadeInRight animate__faster'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutRight animate__faster'
-                },
+                timer: 3000,
+                timerProgressBar: true,
                 didOpen: (toast) => {
                     toast.addEventListener('mouseenter', Swal.stopTimer)
                     toast.addEventListener('mouseleave', Swal.resumeTimer)
-                    const audio = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_0625c153e1.mp3');
-                    audio.volume = 0.3;
-                    audio.play().catch(e => {});
+                },
+                showClass: {
+                    popup: 'animate__animated animate__slideInRight'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__slideOutRight'
                 }
             });
 
-            function showAchievement(title, message, iconType = 'success') {
-                let iconHtml = '🏆';
-                if(iconType === 'error') iconHtml = '❌';
-                if(iconType === 'info') iconHtml = 'ℹ️';
-                if(iconType === 'trash') iconHtml = '🗑️';
+            function showNotification(title, message, type = 'success') {
+                let iconHtml = '';
+                let popupClass = 'system-toast';
 
-                AchievementToast.fire({
+                if (type === 'danger') {
+                    iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+                    popupClass += ' toast-danger';
+                } else {
+                    iconHtml = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    popupClass += ' toast-success';
+                }
+
+                SystemToast.fire({
                     html: `
-                        <div class="achievement-title">${title}</div>
-                        <div class="achievement-desc">${message}</div>
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
                     `,
-                    icon: iconType,
-                    iconHtml: iconHtml
+                    iconHtml: iconHtml,
+                    customClass: {
+                        popup: popupClass,
+                        icon: 'swal2-icon-content'
+                    }
                 });
             }
 
@@ -215,15 +228,15 @@
                 event.stopPropagation();
                 
                 Swal.fire({
-                    title: 'Hapus Kuis?',
-                    text: "Tindakan ini akan menghapus data secara permanen!",
+                    title: 'Hapus Data?',
+                    text: "Data yang dihapus tidak dapat dikembalikan!",
                     icon: 'warning',
                     background: '#1f2937',
                     color: '#f3f4f6',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444', 
                     cancelButtonColor: '#374151',
-                    confirmButtonText: 'Ya, Hapus!',
+                    confirmButtonText: 'Ya, Hapus',
                     cancelButtonText: 'Batal',
                     reverseButtons: true,
                     focusCancel: true,
@@ -238,18 +251,18 @@
 
             @if(session('success'))
                 @if(str_contains(strtolower(session('success')), 'hapus') || str_contains(strtolower(session('success')), 'deleted'))
-                    showAchievement('ITEM REMOVED', "{{ session('success') }}", 'trash');
+                    showNotification('Data Dihapus', "{{ session('success') }}", 'danger');
                 @else
-                    showAchievement('ACHIEVEMENT UNLOCKED', "{{ session('success') }}", 'success');
+                    showNotification('Berhasil Disimpan', "{{ session('success') }}", 'success');
                 @endif
             @endif
 
             @if(session('error'))
-                showAchievement('SYSTEM ERROR', "{{ session('error') }}", 'error');
+                showNotification('Terjadi Kesalahan', "{{ session('error') }}", 'danger');
             @endif
 
             @if(session('status'))
-                showAchievement('NEW NOTIFICATION', "{{ session('status') }}", 'info');
+                showNotification('Info', "{{ session('status') }}", 'success');
             @endif
 
         </script>

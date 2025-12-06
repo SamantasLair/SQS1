@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Quiz;
 use App\Models\Question;
 use App\Models\Option;
+use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -17,6 +18,13 @@ use Illuminate\Support\Facades\Log;
 
 class QuizController extends Controller
 {
+    protected $geminiService;
+
+    public function __construct(GeminiService $geminiService)
+    {
+        $this->geminiService = $geminiService;
+    }
+
     public function index(): View
     {
         $quizzes = Auth::user()->quizzes()->latest()->get();
@@ -141,12 +149,13 @@ class QuizController extends Controller
         Example: What is the output of <pre><code class='language-python'>print('Hello')</code></pre>?
         3. GENERAL TEXT: Do NOT use markdown for bold/italic/headers. Keep it plain text.
         4. JSON Output: Return purely the JSON structure requested below.
+        5. TOPIC: Add a short 'topic' field (e.g., 'Algebra', 'History') for each question.
 
         JSON Structure for multiple_choice:
-        [{\"question\": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"correct_index\": 0}]
+        [{\"question\": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"correct_index\": 0, \"topic\": \"...\"}]
                 
         JSON Structure for essay:
-        [{\"question\": \"...\", \"options\": [], \"correct_index\": null}]
+        [{\"question\": \"...\", \"options\": [], \"correct_index\": null, \"topic\": \"...\"}]
 
         CONTEXT:
         {$promptContext}";
@@ -196,6 +205,7 @@ class QuizController extends Controller
                 $question = $quiz->questions()->create([
                     'question_text' => $qData['question'],
                     'question_type' => $qType,
+                    'topic' => $qData['topic'] ?? 'General',
                 ]);
 
                 if ($qType === 'multiple_choice' && !empty($qData['options'])) {
@@ -241,7 +251,7 @@ class QuizController extends Controller
     public function show(Quiz $quiz): View
     {
         if ($quiz->user_id !== Auth::id()) abort(403);
-        $quiz->load(['questions.options']);
+        $quiz->load(['questions.options', 'attempts']); 
         return view('quizzes.show', compact('quiz'));
     }
 
@@ -278,7 +288,7 @@ class QuizController extends Controller
                     ['id' => $qData['id'] ?? null],
                     [
                         'question_text' => $qData['text'],
-                        'question_type' => $qData['question_type']
+                        'question_type' => $qData['question_type'],
                     ]
                 );
 
@@ -324,5 +334,84 @@ class QuizController extends Controller
     {
         $attempts = $quiz->attempts()->with('user')->orderByDesc('score')->paginate(10);
         return view('quizzes.leaderboard', compact('quiz', 'attempts'));
+    }
+
+    public function analyze(Quiz $quiz): View
+    {
+        if ($quiz->user_id !== Auth::id()) abort(403);
+
+        $userRole = Auth::user()->role;
+        $level = 'basic';
+
+        if ($userRole === 'academic') $level = 'diagnostic';
+        if ($userRole === 'pro') $level = 'remedial';
+        if ($userRole === 'premium') $level = 'full_insight';
+
+        if ($level === 'basic') {
+             return view('quizzes.analysis', [
+                'quiz' => $quiz,
+                'analysis' => null,
+                'error' => 'Fitur Analisis AI hanya tersedia untuk paket Academic, Pro, atau Premium.'
+            ]);
+        }
+
+        $attempts = $quiz->attempts()->whereNotNull('score')->with(['user', 'answers.question'])->get();
+        
+        if ($attempts->isEmpty()) {
+            return view('quizzes.analysis', [
+                'quiz' => $quiz,
+                'analysis' => null,
+                'error' => 'Belum ada data partisipan untuk dianalisis.'
+            ]);
+        }
+
+        $summaryData = [
+            'quiz_title' => $quiz->title,
+            'total_participants' => $attempts->count(),
+            'average_score' => $attempts->avg('score'),
+            'topic_performance' => [],
+            'students_low_performance' => []
+        ];
+
+        $topicStats = [];
+        foreach ($attempts as $attempt) {
+            if ($attempt->score < 70) {
+                $summaryData['students_low_performance'][] = [
+                    'name' => $attempt->user->name,
+                    'score' => $attempt->score
+                ];
+            }
+
+            foreach ($attempt->answers as $answer) {
+                $topic = $answer->question->topic ?? 'General';
+                if (!isset($topicStats[$topic])) {
+                    $topicStats[$topic] = ['correct' => 0, 'total' => 0];
+                }
+                $topicStats[$topic]['total']++;
+                if ($answer->option && $answer->option->is_correct) {
+                    $topicStats[$topic]['correct']++;
+                }
+            }
+        }
+
+        foreach ($topicStats as $topic => $stats) {
+            $summaryData['topic_performance'][$topic] = round(($stats['correct'] / $stats['total']) * 100, 1) . '%';
+        }
+
+        try {
+            $analysisResult = $this->geminiService->analyzeQuizResult($summaryData, $level);
+        } catch (\Exception $e) {
+            return view('quizzes.analysis', [
+                'quiz' => $quiz,
+                'analysis' => null,
+                'error' => 'Gagal menghubungi AI: ' . $e->getMessage()
+            ]);
+        }
+
+        return view('quizzes.analysis', [
+            'quiz' => $quiz,
+            'analysis' => $analysisResult,
+            'level' => $level
+        ]);
     }
 }

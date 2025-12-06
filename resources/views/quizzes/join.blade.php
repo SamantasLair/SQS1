@@ -20,11 +20,19 @@
                     <div>
                         <label for="code" class="block font-bold text-lg text-white mb-4">Masukkan Kode Kuis</label>
                         <input type="text" name="code" id="code" class="block w-full text-center text-4xl font-mono tracking-[0.5em] font-bold rounded-xl shadow-lg border-gray-600 bg-black/30 text-white focus:border-indigo-500 focus:ring-indigo-500 uppercase py-4" required maxlength="6" minlength="6" placeholder="XXXXXX">
-                        
-                        @if(session('error'))
-                            <p class="text-sm text-red-400 mt-4 font-semibold bg-red-500/10 py-2 rounded-lg border border-red-500/20">{{ session('error') }}</p>
-                        @endif
                     </div>
+
+                    @if(!Auth::check())
+                        <div>
+                            <label for="guest_name" class="block font-bold text-lg text-white mb-2">Nama Anda</label>
+                            <input type="text" name="guest_name" id="guest_name" class="block w-full text-center text-lg rounded-xl shadow-lg border-gray-600 bg-black/30 text-white focus:border-indigo-500 focus:ring-indigo-500 py-3" required placeholder="Masukkan Nama Lengkap" value="{{ old('guest_name') }}">
+                            <p class="text-xs text-gray-400 mt-2">Nama ini akan muncul di leaderboard.</p>
+                        </div>
+                    @endif
+                    
+                    @if(session('error'))
+                        <p class="text-sm text-red-400 mt-4 font-semibold bg-red-500/10 py-2 rounded-lg border border-red-500/20">{{ session('error') }}</p>
+                    @endif
                     
                     <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-4 bg-indigo-600 border border-transparent rounded-xl font-bold text-white text-lg uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition ease-in-out duration-150 shadow-lg transform hover:scale-[1.02]">
                         Masuk Ruang Kuis

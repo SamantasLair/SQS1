@@ -27,6 +27,14 @@ Route::get('/', function () {
 
 Route::post('/payment/callback', [PaymentController::class, 'callback'])->name('payment.callback');
 
+Route::get('/join', [JoinQuizController::class, 'create'])->name('quizzes.join');
+Route::post('/join', [JoinQuizController::class, 'store'])->name('quizzes.join.store');
+Route::get('/join-quiz', [JoinQuizController::class, 'create'])->name('quizzes.join.show');
+
+Route::get('/quizzes/{quiz}/start', [QuizAttemptController::class, 'start'])->name('quizzes.start');
+Route::get('/quizzes/{quiz}/attempt/{attempt}', [QuizAttemptController::class, 'show'])->name('quizzes.attempt');
+Route::post('/quizzes/{quiz}/attempt/{attempt}', [QuizAttemptController::class, 'submit'])->name('quizzes.submit');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('/dashboard', function () {
@@ -64,16 +72,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/questions/{question}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
 
         Route::get('/quizzes/{quiz}/leaderboard', [QuizController::class, 'leaderboard'])->name('quizzes.leaderboard');
-        
-        Route::get('/join', [JoinQuizController::class, 'create'])->name('quizzes.join');
-        Route::post('/join', [JoinQuizController::class, 'store'])->name('quizzes.join.store');
-        Route::get('/join-quiz', [JoinQuizController::class, 'create'])->name('quizzes.join.show');
-
-        Route::get('/quizzes/{quiz}/start', [QuizAttemptController::class, 'start'])->name('quizzes.start');
-        
-        Route::get('/quizzes/{quiz}/attempt/{attempt}', [QuizAttemptController::class, 'show'])->name('quizzes.attempt');
-        Route::post('/quizzes/{quiz}/attempt/{attempt}', [QuizAttemptController::class, 'submit'])->name('quizzes.submit');
-        
         Route::get('/leaderboard', [QuizController::class, 'leaderboard'])->name('leaderboard');
     });
 
