@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Quiz;
 use App\Models\Question;
-use App\Models\Option;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Http;
 use Smalot\PdfParser\Parser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -45,7 +43,8 @@ class QuizController extends Controller
             'ai_prompt' => 'nullable|string',
             'document' => 'nullable|mimes:pdf|max:10240',
             'question_count' => 'nullable|integer|min:1|max:20',
-            'question_type' => 'nullable|in:multiple_choice,essay',
+            'pg_count' => 'nullable|integer|min:0',
+            'essay_count' => 'nullable|integer|min:0',
         ]);
 
         $user = Auth::user();
@@ -53,58 +52,86 @@ class QuizController extends Controller
 
         if ($isUsingAi && !$user->is_premium) {
             $today = now()->toDateString();
-            
             if ($user->last_ai_usage_date !== $today) {
-                $user->update([
-                    'ai_usage_count' => 0,
-                    'last_ai_usage_date' => $today
-                ]);
+                $user->update(['ai_usage_count' => 0, 'last_ai_usage_date' => $today]);
             }
-
             if ($user->ai_usage_count >= 3) {
-                return back()->with('error', 'Batas penggunaan AI harian Anda (3x) sudah habis. Upgrade ke Premium untuk akses tanpa batas.')->withInput();
+                return back()->with('error', 'Limit harian AI habis. Upgrade ke Premium.')->withInput();
             }
         }
 
         try {
-            do {
+            $quiz = DB::transaction(function () use ($request, $user, $isUsingAi) {
                 $code = Str::upper(Str::random(6));
-            } while (Quiz::where('join_code', $code)->exists());
+                while (Quiz::where('join_code', $code)->exists()) {
+                    $code = Str::upper(Str::random(6));
+                }
 
-            $source = 'manual';
-            if ($isUsingAi) {
-                $source = 'ai';
-            }
+                $quiz = $user->quizzes()->create([
+                    'title' => $request->title,
+                    'description' => $request->description,
+                    'timer' => $request->timer,
+                    'generation_source' => $isUsingAi ? 'ai' : 'manual',
+                    'join_code' => $code,
+                ]);
 
-            $quiz = Auth::user()->quizzes()->create([
-                'title' => $request->title,
-                'description' => $request->description,
-                'timer' => $request->timer,
-                'generation_source' => $source,
-                'join_code' => $code,
-            ]);
-
-            if ($source === 'ai') {
-                try {
+                if ($isUsingAi) {
+                    session()->save(); 
+                    
                     $this->generateQuestionsFromAi($quiz, $request);
                     
-                    if (!$user->is_premium) {
-                        $user->increment('ai_usage_count');
-                    }
-
-                    return redirect()->route('quizzes.edit', $quiz)
-                        ->with('success', 'Kuis berhasil dibuat oleh AI.');
-                } catch (\Exception $e) {
-                    return redirect()->route('quizzes.edit', $quiz)
-                        ->with('error', 'Kuis tersimpan, tapi AI gagal: ' . $e->getMessage());
+                    if (!$user->is_premium) $user->increment('ai_usage_count');
                 }
-            }
+
+                return $quiz;
+            });
 
             return redirect()->route('quizzes.edit', $quiz)
-                ->with('success', 'Kuis berhasil dibuat.');
+                ->with('success', $isUsingAi ? 'Kuis berhasil dibuat AI.' : 'Kuis manual berhasil dibuat.');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal membuat kuis: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Gagal: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    public function duplicate(Quiz $quiz): RedirectResponse
+    {
+        if ($quiz->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        try {
+            $newQuiz = DB::transaction(function () use ($quiz) {
+                $code = Str::upper(Str::random(6));
+                while (Quiz::where('join_code', $code)->exists()) {
+                    $code = Str::upper(Str::random(6));
+                }
+
+                $newQuiz = $quiz->replicate(['join_code', 'created_at', 'updated_at']);
+                $newQuiz->title = $quiz->title . ' (Copy)';
+                $newQuiz->join_code = $code;
+                $newQuiz->user_id = Auth::id();
+                $newQuiz->save();
+
+                foreach ($quiz->questions as $question) {
+                    $newQuestion = $question->replicate(['quiz_id', 'created_at', 'updated_at']);
+                    $newQuestion->quiz_id = $newQuiz->id;
+                    $newQuestion->save();
+
+                    foreach ($question->options as $option) {
+                        $newOption = $option->replicate(['question_id', 'created_at', 'updated_at']);
+                        $newOption->question_id = $newQuestion->id;
+                        $newOption->save();
+                    }
+                }
+
+                return $newQuiz;
+            });
+
+            return redirect()->route('quizzes.edit', $newQuiz)->with('success', 'Kuis berhasil diduplikasi.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menduplikasi kuis: ' . $e->getMessage());
         }
     }
 
@@ -119,133 +146,53 @@ class QuizController extends Controller
             try {
                 $parser = new Parser();
                 $pdf = $parser->parseFile($request->file('document')->path());
-                $text = Str::limit(preg_replace('/\s+/', ' ', $pdf->getText()), 12000);
+                $text = Str::limit(preg_replace('/\s+/', ' ', $pdf->getText()), 15000);
                 
-                if (strlen($text) < 50) throw new \Exception('Teks PDF terlalu sedikit.');
+                if (strlen($text) < 20) throw new \Exception('Teks PDF kosong atau tidak terbaca.');
                 
-                $promptContext .= "SOURCE MATERIAL FROM PDF:\n" . $text . "\n\n";
+                $promptContext .= "MATERI PDF:\n" . $text . "\n\n";
             } catch (\Exception $e) {
                 throw new \Exception('Gagal membaca PDF: ' . $e->getMessage());
             }
         }
 
         if ($request->filled('ai_prompt')) {
-            $promptContext .= "USER INSTRUCTION/TOPIC:\n" . $request->ai_prompt . "\n\n";
+            $promptContext .= "TOPIK/INSTRUKSI:\n" . $request->ai_prompt . "\n\n";
         }
 
-        $qCount = $request->question_count ?? 10;
-        $qType = $request->question_type ?? 'multiple_choice';
+        if (empty(trim($promptContext))) throw new \Exception('Tidak ada input materi.');
 
-        $apiKey = env('GEMINI_API_KEY');
-        if (!$apiKey) throw new \Exception('API Key Gemini tidak ditemukan.');
-
-        $modelName = $this->getAvailableGeminiModel($apiKey);
-
-        $finalPrompt = "You are a teacher creating a quiz. Create {$qCount} {$qType} questions based on the context provided.
+        $total = (int) ($request->question_count ?? 10);
+        $pgAmount = isset($request->pg_count) ? (int)$request->pg_count : $total;
+        $essayAmount = isset($request->essay_count) ? (int)$request->essay_count : 0;
         
-        RULES FOR FORMATTING:
-        1. MATHEMATICS/PHYSICS: WRAP all formulas in single dollar signs ($...$). Example: \$x^2 + y^2 = z^2\$.
-        2. CODE SNIPPETS: WRAP all code in HTML <pre><code> tags. Do NOT use markdown backticks.
-        Example: What is the output of <pre><code class='language-python'>print('Hello')</code></pre>?
-        3. GENERAL TEXT: Do NOT use markdown for bold/italic/headers. Keep it plain text.
-        4. JSON Output: Return purely the JSON structure requested below.
-        5. TOPIC: Add a short 'topic' field (e.g., 'Algebra', 'History') for each question.
+        $questions = $this->geminiService->generateQuizFromText($promptContext, $pgAmount, $essayAmount);
 
-        JSON Structure for multiple_choice:
-        [{\"question\": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"correct_index\": 0, \"topic\": \"...\"}]
-                
-        JSON Structure for essay:
-        [{\"question\": \"...\", \"options\": [], \"correct_index\": null, \"topic\": \"...\"}]
+        if (empty($questions) || !is_array($questions)) {
+            throw new \Exception('AI gagal memproses materi. Coba perjelas instruksi.');
+        }
 
-        CONTEXT:
-        {$promptContext}";
+        foreach ($questions as $qData) {
+            $qText = $qData['question_text'] ?? null;
+            if (!$qText) continue;
 
-        $url = "https://generativelanguage.googleapis.com/v1beta/{$modelName}:generateContent?key={$apiKey}";
+            $qType = $qData['question_type'] ?? 'multiple_choice';
 
-        $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->post($url, [
-                'contents' => [['parts' => [['text' => $finalPrompt]]]],
-                'generationConfig' => [
-                    'responseMimeType' => 'application/json',
-                    'temperature' => 0.7
-                ]
+            $question = $quiz->questions()->create([
+                'question_text' => $qText,
+                'question_type' => $qType,
+                'topic' => $qData['topic'] ?? 'Umum',
             ]);
 
-        if ($response->failed()) {
-            throw new \Exception("AI Error: " . $response->body());
-        }
-
-        $responseData = $response->json();
-        
-        if (!isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
-            throw new \Exception('Respon AI kosong.');
-        }
-
-        $text = $responseData['candidates'][0]['content']['parts'][0]['text'];
-        
-        $cleanText = preg_replace('/```json\s*|\s*```/', '', $text);
-    
-        $start = strpos($cleanText, '[');
-        $end = strrpos($cleanText, ']');
-        
-        if ($start !== false && $end !== false) {
-            $jsonContent = substr($cleanText, $start, ($end - $start) + 1);
-        } else {
-            $jsonContent = $cleanText;
-        }
-
-        $questionsData = json_decode($jsonContent, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Gagal parsing JSON AI: ' . json_last_error_msg());
-        }
-
-        DB::transaction(function() use ($quiz, $questionsData, $qType) {
-            foreach ($questionsData as $qData) {
-                $question = $quiz->questions()->create([
-                    'question_text' => $qData['question'],
-                    'question_type' => $qType,
-                    'topic' => $qData['topic'] ?? 'General',
-                ]);
-
-                if ($qType === 'multiple_choice' && !empty($qData['options'])) {
-                    foreach ($qData['options'] as $index => $optionText) {
-                        $question->options()->create([
-                            'option_text' => $optionText,
-                            'is_correct' => isset($qData['correct_index']) && ($index === (int)$qData['correct_index']),
-                        ]);
-                    }
-                }
-            }
-        });
-    }
-
-    private function getAvailableGeminiModel($apiKey)
-    {
-        $response = Http::get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
-        if ($response->failed()) return 'models/gemini-1.5-flash';
-
-        $data = $response->json();
-        $models = $data['models'] ?? [];
-        $preferredTerms = ['flash', 'pro', 'gemini-1.5', 'gemini-1.0'];
-
-        foreach ($preferredTerms as $term) {
-            foreach ($models as $model) {
-                if (isset($model['name']) && 
-                    in_array('generateContent', $model['supportedGenerationMethods'] ?? []) &&
-                    str_contains($model['name'], $term)) {
-                    return $model['name'];
+            if ($qType === 'multiple_choice' && !empty($qData['options'])) {
+                foreach ($qData['options'] as $opt) {
+                    $question->options()->create([
+                        'option_text' => $opt['text'],
+                        'is_correct' => filter_var($opt['is_correct'], FILTER_VALIDATE_BOOLEAN),
+                    ]);
                 }
             }
         }
-        
-        foreach ($models as $model) {
-            if (in_array('generateContent', $model['supportedGenerationMethods'] ?? [])) {
-                return $model['name'];
-            }
-        }
-
-        return 'models/gemini-pro';
     }
 
     public function show(Quiz $quiz): View
@@ -271,49 +218,41 @@ class QuizController extends Controller
             'description' => 'nullable|string',
             'timer' => 'required|integer|min:1',
             'questions' => 'nullable|array',
-            'questions.*.text' => 'required|string',
-            'questions.*.question_type' => 'required|in:multiple_choice,essay',
         ]);
 
         DB::transaction(function () use ($request, $quiz) {
             $quiz->update($request->only('title', 'description', 'timer'));
 
-            $inputQuestions = $request->questions ?? [];
-            $inputQuestionIds = collect($inputQuestions)->pluck('id')->filter()->toArray();
-            
-            $quiz->questions()->whereNotIn('id', $inputQuestionIds)->delete();
+            $incomingQs = $request->questions ?? [];
+            $keepQIds = collect($incomingQs)->pluck('id')->filter()->toArray();
+            $quiz->questions()->whereNotIn('id', $keepQIds)->delete();
 
-            foreach ($inputQuestions as $qData) {
+            foreach ($incomingQs as $qData) {
                 $question = $quiz->questions()->updateOrCreate(
                     ['id' => $qData['id'] ?? null],
                     [
                         'question_text' => $qData['text'],
-                        'question_type' => $qData['question_type'],
+                        'question_type' => $qData['question_type'] ?? 'multiple_choice', 
+                        'topic' => $qData['topic'] ?? 'Umum'
                     ]
                 );
 
-                if ($qData['question_type'] === 'multiple_choice' && isset($qData['options'])) {
-                    $inputOptions = $qData['options'];
-                    $inputOptionIds = collect($inputOptions)->pluck('id')->filter()->toArray();
-                    
-                    $question->options()->whereNotIn('id', $inputOptionIds)->delete();
+                if (isset($qData['options'])) {
+                    $keepOptIds = collect($qData['options'])->pluck('id')->filter()->toArray();
+                    $question->options()->whereNotIn('id', $keepOptIds)->delete();
 
-                    foreach ($inputOptions as $oIndex => $oData) {
+                    foreach ($qData['options'] as $oIdx => $oData) {
+                        $isCorrect = isset($qData['correct_option']) && (int)$qData['correct_option'] == $oIdx;
                         $question->options()->updateOrCreate(
                             ['id' => $oData['id'] ?? null],
-                            [
-                                'option_text' => $oData['text'],
-                                'is_correct' => isset($qData['correct_option']) && (int)$qData['correct_option'] == $oIndex
-                            ]
+                            ['option_text' => $oData['text'], 'is_correct' => $isCorrect]
                         );
                     }
-                } else {
-                    $question->options()->delete();
                 }
             }
         });
 
-        return redirect()->route('quizzes.show', $quiz)->with('success', 'Kuis berhasil diperbarui.');
+        return redirect()->route('quizzes.show', $quiz)->with('success', 'Kuis diperbarui.');
     }
 
     public function destroy(Quiz $quiz): RedirectResponse
@@ -327,7 +266,7 @@ class QuizController extends Controller
     {
         if ($question->quiz->user_id !== Auth::id()) abort(403);
         $question->delete();
-        return back()->with('success', 'Soal berhasil dihapus.');
+        return back()->with('success', 'Soal dihapus.');
     }
 
     public function leaderboard(Quiz $quiz): View
@@ -341,72 +280,53 @@ class QuizController extends Controller
         if ($quiz->user_id !== Auth::id()) abort(403);
 
         $userRole = Auth::user()->role;
-        $level = 'basic';
-
-        if ($userRole === 'academic') $level = 'diagnostic';
-        if ($userRole === 'pro') $level = 'remedial';
-        if ($userRole === 'premium') $level = 'full_insight';
+        $level = match($userRole) {
+            'academic' => 'diagnostic',
+            'pro' => 'remedial',
+            'premium' => 'full_insight',
+            default => 'basic'
+        };
 
         if ($level === 'basic') {
-             return view('quizzes.analysis', [
-                'quiz' => $quiz,
-                'analysis' => null,
-                'error' => 'Fitur Analisis AI hanya tersedia untuk paket Academic, Pro, atau Premium.'
-            ]);
+             return view('quizzes.analysis', ['quiz' => $quiz, 'analysis' => null, 'error' => 'Fitur berbayar.']);
         }
 
         $attempts = $quiz->attempts()->whereNotNull('score')->with(['user', 'answers.question'])->get();
-        
         if ($attempts->isEmpty()) {
-            return view('quizzes.analysis', [
-                'quiz' => $quiz,
-                'analysis' => null,
-                'error' => 'Belum ada data partisipan untuk dianalisis.'
-            ]);
+            return view('quizzes.analysis', ['quiz' => $quiz, 'analysis' => null, 'error' => 'Data kosong.']);
         }
 
         $summaryData = [
             'quiz_title' => $quiz->title,
-            'total_participants' => $attempts->count(),
-            'average_score' => $attempts->avg('score'),
-            'topic_performance' => [],
-            'students_low_performance' => []
+            'stats' => [
+                'count' => $attempts->count(),
+                'avg' => round($attempts->avg('score'), 1)
+            ],
+            'topics' => []
         ];
 
-        $topicStats = [];
-        foreach ($attempts as $attempt) {
-            if ($attempt->score < 70) {
-                $summaryData['students_low_performance'][] = [
-                    'name' => $attempt->user->name,
-                    'score' => $attempt->score
-                ];
-            }
+        $topicCorrect = [];
+        $topicTotal = [];
 
-            foreach ($attempt->answers as $answer) {
-                $topic = $answer->question->topic ?? 'General';
-                if (!isset($topicStats[$topic])) {
-                    $topicStats[$topic] = ['correct' => 0, 'total' => 0];
+        foreach ($attempts as $att) {
+            foreach ($att->answers as $ans) {
+                $topic = $ans->question->topic ?? 'Umum';
+                if (!isset($topicTotal[$topic])) {
+                    $topicTotal[$topic] = 0;
+                    $topicCorrect[$topic] = 0;
                 }
-                $topicStats[$topic]['total']++;
-                if ($answer->option && $answer->option->is_correct) {
-                    $topicStats[$topic]['correct']++;
+                $topicTotal[$topic]++;
+                if ($ans->option && $ans->option->is_correct) {
+                    $topicCorrect[$topic]++;
                 }
             }
         }
 
-        foreach ($topicStats as $topic => $stats) {
-            $summaryData['topic_performance'][$topic] = round(($stats['correct'] / $stats['total']) * 100, 1) . '%';
+        foreach ($topicTotal as $t => $total) {
+            $summaryData['topics'][$t] = round(($topicCorrect[$t] / $total) * 100) . '%';
         }
 
-        try {
-            $analysisResult = $this->geminiService->analyzeQuizResult($summaryData, $level);
-        } catch (\Exception $e) {
-            return view('quizzes.analysis', [
-                'quiz' => $quiz,
-                'analysis' => null,
-                'error' => 'Gagal menghubungi AI: ' . $e->getMessage()
-            ]);
-        }
+        $analysisResult = $this->geminiService->analyzeQuizResult($summaryData, $level);
 
         return view('quizzes.analysis', [
             'quiz' => $quiz,

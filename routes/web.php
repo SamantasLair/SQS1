@@ -69,6 +69,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['role:user,pro,premium,academic'])->group(function () {
         Route::resource('quizzes', QuizController::class);
+        Route::post('/quizzes/{quiz}/duplicate', [QuizController::class, 'duplicate'])->name('quizzes.duplicate');
+        Route::get('/quizzes/{quiz}/analyze', [QuizController::class, 'analyze'])->name('quizzes.analyze');
         Route::delete('/questions/{question}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
 
         Route::get('/quizzes/{quiz}/leaderboard', [QuizController::class, 'leaderboard'])->name('quizzes.leaderboard');

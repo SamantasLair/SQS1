@@ -1,156 +1,175 @@
 <x-app-layout>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
+    <style>
+        .prose pre { margin: 0.5em 0 !important; padding: 0 !important; background: #282c34 !important; border-radius: 0.5rem; }
+        .prose pre code { padding: 1em !important; background: transparent !important; color: #abb2bf !important; }
+        .math-display { overflow-x: auto; }
+    </style>
+
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-bold text-2xl text-white leading-tight">
+            <h2 class="font-bold text-3xl text-white tracking-tight drop-shadow-md">
                 {{ __('Detail Kuis') }}
             </h2>
             <div class="flex gap-3">
-                <a href="{{ route('quizzes.index') }}" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition">
+                <a href="{{ route('quizzes.index') }}" class="px-6 py-2.5 rounded-xl border border-gray-600 text-gray-300 font-bold hover:bg-gray-800 hover:text-white transition-all">
                     Kembali
                 </a>
-                @if($quiz->user_id === auth()->id())
-                    <a href="{{ route('quizzes.edit', $quiz) }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/20">
-                        Edit Kuis
-                    </a>
-                @endif
+                <a href="{{ route('quizzes.edit', $quiz) }}" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all">
+                    Edit Kuis
+                </a>
             </div>
         </div>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-8">
             
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
-                        <div class="p-8 relative">
-                            <div class="absolute top-0 right-0 p-6 opacity-10">
-                                <svg class="w-32 h-32 text-indigo-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
-                            </div>
-                            
-                            <h1 class="text-3xl font-bold text-white mb-4">{{ $quiz->title }}</h1>
-                            <div class="prose prose-invert max-w-none text-gray-300 mb-6">
-                                {{ $quiz->description ?? 'Tidak ada deskripsi.' }}
-                            </div>
-
-                            <div class="flex flex-wrap gap-4 mt-6">
-                                <div class="flex items-center gap-2 bg-gray-900/50 px-4 py-2 rounded-lg border border-gray-600">
-                                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <span class="text-gray-300 font-mono">{{ $quiz->timer }} Menit</span>
-                                </div>
-                                <div class="flex items-center gap-2 bg-gray-900/50 px-4 py-2 rounded-lg border border-gray-600">
-                                    <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <span class="text-gray-300 font-mono">{{ $quiz->questions->count() }} Soal</span>
-                                </div>
-                                <div class="flex items-center gap-2 bg-gray-900/50 px-4 py-2 rounded-lg border border-gray-600">
-                                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                    <span class="text-gray-300 font-mono">{{ $quiz->attempts()->count() }} Peserta</span>
-                                </div>
-                            </div>
+            <div class="bg-gray-900 rounded-3xl border border-gray-800 shadow-2xl overflow-hidden relative">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                <div class="p-8 relative z-10">
+                    <div class="flex flex-col md:flex-row gap-6 justify-between items-start">
+                        <div>
+                            <h1 class="text-3xl font-black text-white mb-2">{{ $quiz->title }}</h1>
+                            <p class="text-gray-400 text-lg leading-relaxed">{{ $quiz->description ?? 'Tidak ada deskripsi.' }}</p>
                         </div>
-
-                        <div class="bg-gray-900/30 p-6 border-t border-gray-700 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                            <div class="flex flex-col">
-                                <span class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Kode Join</span>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-3xl font-black text-white tracking-widest">{{ $quiz->join_code }}</span>
-                                    <button onclick="navigator.clipboard.writeText('{{ $quiz->join_code }}'); alert('Kode disalin!')" class="text-gray-400 hover:text-white transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                        <div class="flex flex-col gap-3 min-w-[200px]">
+                            <div class="bg-gray-800/50 p-4 rounded-2xl border border-gray-700">
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Kode Join</span>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-mono font-bold text-indigo-400 tracking-widest">{{ $quiz->join_code }}</span>
+                                    <button onclick="navigator.clipboard.writeText('{{ $quiz->join_code }}'); alert('Kode disalin!');" class="text-gray-500 hover:text-white transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                                     </button>
                                 </div>
                             </div>
-                            
-                            <div class="flex gap-3 w-full sm:w-auto">
-                                @if($quiz->user_id === auth()->id())
-                                    <a href="{{ route('quizzes.analyze', $quiz) }}" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-600/20">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.416H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                                        Analisis AI
-                                    </a>
-                                    <a href="{{ route('quizzes.leaderboard', $quiz) }}" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition border border-gray-600">
-                                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        Leaderboard
-                                    </a>
-                                @else
-                                    <a href="{{ route('quizzes.start', $quiz) }}" class="flex-1 sm:flex-none text-center px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition shadow-lg shadow-green-600/20">
-                                        Mulai Kuis
-                                    </a>
-                                @endif
+                            <div class="flex gap-3">
+                                <div class="flex-1 bg-gray-800/50 p-3 rounded-2xl border border-gray-700 text-center">
+                                    <span class="block text-xs font-bold text-gray-500 uppercase">Durasi</span>
+                                    <span class="text-white font-bold">{{ $quiz->timer }}m</span>
+                                </div>
+                                <div class="flex-1 bg-gray-800/50 p-3 rounded-2xl border border-gray-700 text-center">
+                                    <span class="block text-xs font-bold text-gray-500 uppercase">Soal</span>
+                                    <span class="text-white font-bold">{{ $quiz->questions->count() }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="space-y-6">
-                    <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6">
-                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                            Top Leaderboard
-                        </h3>
-                        
-                        <div class="space-y-4">
-                            @php
-                                $topAttempts = $quiz->attempts()->with('user')->orderByDesc('score')->take(5)->get();
-                            @endphp
-
-                            @forelse($topAttempts as $index => $attempt)
-                                <div class="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700">
-                                    <div class="flex items-center gap-3">
-                                        <span class="font-bold text-gray-500 w-4">#{{ $index + 1 }}</span>
-                                        <div class="text-sm">
-                                            <div class="font-bold text-white">{{ $attempt->user->name }}</div>
-                                            <div class="text-xs text-gray-500">{{ $attempt->created_at->diffForHumans() }}</div>
-                                        </div>
-                                    </div>
-                                    <span class="font-bold text-indigo-400">{{ number_format($attempt->score, 0) }}</span>
-                                </div>
-                            @empty
-                                <div class="text-center py-6 text-gray-500 text-sm">
-                                    Belum ada data.
-                                </div>
-                            @endforelse
-                            
-                            @if($topAttempts->count() > 0)
-                                <a href="{{ route('quizzes.leaderboard', $quiz) }}" class="block text-center text-sm text-indigo-400 hover:text-indigo-300 mt-4">
-                                    Lihat Selengkapnya →
-                                </a>
-                            @endif
-                        </div>
+                    <div class="mt-8 pt-6 border-t border-gray-800 flex gap-4">
+                        <a href="{{ route('quizzes.analyze', $quiz) }}" class="flex items-center gap-2 px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-indigo-400 font-bold rounded-xl transition border border-gray-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            Analisis AI
+                        </a>
+                        <a href="{{ route('quizzes.leaderboard', $quiz) }}" class="flex items-center gap-2 px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-yellow-500 font-bold rounded-xl transition border border-gray-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Leaderboard
+                        </a>
                     </div>
                 </div>
             </div>
 
-            @if($quiz->user_id === auth()->id())
-                <div class="mt-8">
-                    <h3 class="text-xl font-bold text-white mb-6">Daftar Pertanyaan</h3>
-                    <div class="space-y-4">
-                        @foreach($quiz->questions as $index => $question)
-                            <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
-                                <div class="flex justify-between items-start gap-4">
-                                    <div class="flex gap-4">
-                                        <span class="flex-shrink-0 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-gray-300 font-bold">
-                                            {{ $index + 1 }}
-                                        </span>
-                                        <div>
-                                            <p class="text-white text-lg font-medium">{{ $question->question_text }}</p>
-                                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                @foreach($question->options as $option)
-                                                    <div class="flex items-center gap-2 p-3 rounded-lg border {{ $option->is_correct ? 'bg-green-900/20 border-green-500/30' : 'bg-gray-900/30 border-gray-700' }}">
-                                                        <div class="w-4 h-4 rounded-full border {{ $option->is_correct ? 'border-green-500 bg-green-500' : 'border-gray-500' }}"></div>
-                                                        <span class="{{ $option->is_correct ? 'text-green-300' : 'text-gray-400' }}">{{ $option->option_text }}</span>
-                                                    </div>
-                                                @endforeach
+            <div class="space-y-6">
+                <div class="flex justify-between items-center px-2">
+                    <h3 class="text-xl font-bold text-white">Daftar Pertanyaan</h3>
+                    <span class="text-xs text-gray-500 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">
+                        Total: {{ $quiz->questions->count() }}
+                    </span>
+                </div>
+                
+                @forelse($quiz->questions as $index => $question)
+                    <div class="bg-gray-900 rounded-2xl border border-gray-800 p-6 shadow-lg">
+                        <div class="flex gap-4">
+                            <span class="flex-shrink-0 w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-indigo-400 font-black text-lg shadow-inner">
+                                {{ $index + 1 }}
+                            </span>
+                            
+                            <div class="flex-1 min-w-0"> <div class="text-white text-lg font-medium leading-relaxed mb-6 prose prose-invert max-w-none">
+                                    {!! $question->question_text !!}
+                                </div>
+
+                                @if($question->question_type === 'multiple_choice')
+                                    <div class="grid grid-cols-1 gap-3">
+                                        @foreach($question->options as $option)
+                                            <div class="flex items-start gap-4 p-4 rounded-xl border {{ $option->is_correct ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800/50 border-gray-700' }}">
+                                                <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mt-0.5 {{ $option->is_correct ? 'border-green-500 bg-green-500' : 'border-gray-600' }}">
+                                                    @if($option->is_correct)
+                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    @endif
+                                                </div>
+                                                
+                                                <div class="flex-1 min-w-0 text-gray-300 prose prose-invert prose-sm max-w-none">
+                                                    {!! $option->option_text !!}
+                                                </div>
                                             </div>
-                                        </div>
+                                        @endforeach
                                     </div>
-                                    <span class="px-2 py-1 bg-gray-700 rounded text-xs text-gray-400 uppercase">
-                                        {{ str_replace('_', ' ', $question->question_type) }}
+                                @else
+                                    <div class="p-4 bg-gray-800/50 rounded-xl border border-gray-700 text-gray-400 italic flex items-center gap-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        Soal Essay / Uraian
+                                    </div>
+                                @endif
+
+                                <div class="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                                    <span class="px-3 py-1 bg-gray-800 rounded-lg text-xs font-bold text-gray-500 uppercase tracking-wider border border-gray-700">
+                                        {{ $question->topic ?? 'Umum' }}
                                     </span>
+                                    <form action="{{ route('questions.destroy', $question) }}" method="POST" onsubmit="return confirm('Hapus soal ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-400 hover:text-red-300 text-xs font-bold transition flex items-center gap-1 uppercase tracking-wider">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            Hapus
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
-                        @endforeach
+                        </div>
                     </div>
-                </div>
-            @endif
+                @empty
+                    <div class="text-center py-16 bg-gray-900 rounded-3xl border border-gray-800 border-dashed">
+                        <div class="p-4 bg-gray-800 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 border border-gray-700">
+                            <svg class="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h3 class="text-white font-bold text-xl mb-2">Belum ada soal</h3>
+                        <p class="text-gray-500 mb-8">Kuis ini masih kosong. Silakan tambahkan soal manual atau gunakan AI.</p>
+                        <a href="{{ route('quizzes.edit', $quiz) }}" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-600/20">
+                            Tambah Soal
+                        </a>
+                    </div>
+                @endforelse
+            </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    
+    <script>
+        // Inisialisasi Highlight.js
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+
+        // Konfigurasi MathJax
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax initial rendering complete');
+                    });
+                }
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </x-app-layout>

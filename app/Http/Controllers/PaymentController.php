@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
 use Midtrans\Notification;
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
@@ -50,7 +51,7 @@ class PaymentController extends Controller
         
         $amount = match($plan) {
             'pro' => 100000,
-            'premium' => 1,
+            'premium' => 150000,
             default => 100000
         };
 
@@ -68,7 +69,7 @@ class PaymentController extends Controller
                     'id' => $plan . '_subscription',
                     'price' => $amount,
                     'quantity' => 1,
-                    'name' => 'Langganan ' . ucfirst($plan) . ' SQS',
+                    'name' => 'Langganan ' . ucfirst($plan) . ' SQS (30 Hari)',
                 ]
             ]
         ];
@@ -158,9 +159,15 @@ class PaymentController extends Controller
 
         $user = User::find($transaction->user_id);
         if ($user) {
+            $currentSubscriptionEnd = $user->subscription_ends_at ? Carbon::parse($user->subscription_ends_at) : now();
+            if ($currentSubscriptionEnd->isPast()) {
+                $currentSubscriptionEnd = now();
+            }
+
             $user->update([
                 'role' => $newRole,
                 'is_premium' => true,
+                'subscription_ends_at' => $currentSubscriptionEnd->addDays(30),
             ]);
         }
     }
