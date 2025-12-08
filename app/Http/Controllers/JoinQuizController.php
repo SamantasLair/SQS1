@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 
 class JoinQuizController extends Controller
 {
@@ -18,20 +19,23 @@ class JoinQuizController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'code' => 'required|string|min:6|max:6',
-            'guest_name' => Auth::check() ? 'nullable' : 'required|string|max:50',
+            'join_code' => 'required|string|exists:quizzes,join_code',
+            'guest_name' => 'nullable|string|max:50|required_without:user_auth', 
         ]);
 
-        $quiz = Quiz::where('join_code', $request->code)->first();
-
-        if (!$quiz) {
-            return back()->with('error', 'Kode kuis tidak ditemukan.');
+        if (!Auth::check() && !$request->filled('guest_name')) {
+            return back()->withErrors(['guest_name' => 'Nama wajib diisi untuk peserta tamu.'])->withInput();
         }
 
-        if (!Auth::check()) {
-            session(['guest_name' => $request->guest_name]);
-        }
+        $quiz = Quiz::where('join_code', $request->join_code)->firstOrFail();
 
-        return redirect()->route('quizzes.start', $quiz);
+        $attempt = QuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            'user_id' => Auth::id(), 
+            'guest_name' => Auth::check() ? null : $request->guest_name,
+            'started_at' => now(),
+        ]);
+
+        return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
     }
 }

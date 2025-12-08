@@ -6,8 +6,8 @@
             background-color: #282c34 !important;
             color: #abb2bf !important;
             padding: 0 !important;
-            margin: 1em 0 !important;
-            border-radius: 0.75rem !important;
+            margin: 0.75em 0 !important;
+            border-radius: 0.5rem !important;
             overflow-x: auto;
         }
 
@@ -15,14 +15,13 @@
             background-color: transparent !important;
             color: inherit !important;
             font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-            padding: 1.25rem !important;
+            padding: 1rem !important;
             border: none !important;
             display: block !important;
             font-size: 0.875rem !important;
-            line-height: 1.7 !important;
+            line-height: 1.6 !important;
         }
 
-        /* Hilangkan backtick (`) default dari prose jika ada */
         .prose code::before,
         .prose code::after {
             content: "" !important;
@@ -66,6 +65,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
     
     <script>
@@ -94,7 +94,7 @@
                         <div>
                             <h3 class="font-bold text-lg text-white flex items-center gap-2">
                                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Deskripsi
+                                Deskripsissssss
                             </h3>
                             <div class="mt-2 text-gray-300 leading-relaxed bg-gray-900/30 p-4 rounded-lg border border-gray-700/50">
                                 {{ $quiz->description ?: 'Tidak ada deskripsi untuk kuis ini.' }}
@@ -131,16 +131,27 @@
                             </div>
                             <div class="h-full w-0.5 bg-gray-700 rounded-full"></div>
                         </div>
-                        <div class="grow">
+                        <div class="grow min-w-0">
+                            {{-- DEEP DECODING LOGIC: Loop decode sampai tidak ada entity tersisa --}}
+                            @php
+                                $qText = $question->question_text;
+                                for($i=0; $i<3; $i++) { $qText = html_entity_decode($qText, ENT_QUOTES | ENT_HTML5); }
+                            @endphp
+                            
                             <div class="text-lg font-medium mb-6 text-gray-100 prose prose-invert max-w-none">
-                                {!! $question->question_text !!}
+                                {!! $qText !!}
                             </div>
                             
                             @if($question->question_type === 'multiple_choice')
                                 <div class="grid grid-cols-1 gap-3">
                                     @foreach($question->options as $option)
-                                    <div class="group flex items-center p-4 rounded-lg border transition-all duration-200 {{ $option->is_correct ? 'bg-green-900/20 border-green-500/40 hover:bg-green-900/30' : 'bg-gray-700/20 border-gray-600 hover:bg-gray-700/40 hover:border-gray-500' }}">
-                                        <div class="flex-shrink-0 mr-4">
+                                    @php
+                                        $oText = $option->option_text;
+                                        for($i=0; $i<3; $i++) { $oText = html_entity_decode($oText, ENT_QUOTES | ENT_HTML5); }
+                                    @endphp
+                                    
+                                    <div class="group flex items-start p-4 rounded-lg border transition-all duration-200 {{ $option->is_correct ? 'bg-green-900/20 border-green-500/40 hover:bg-green-900/30' : 'bg-gray-700/20 border-gray-600 hover:bg-gray-700/40 hover:border-gray-500' }}">
+                                        <div class="flex-shrink-0 mr-4 mt-1">
                                             @if($option->is_correct)
                                                 <div class="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -149,9 +160,12 @@
                                                 <div class="w-6 h-6 rounded-full border-2 border-gray-500 group-hover:border-gray-400"></div>
                                             @endif
                                         </div>
-                                        <span class="grow {{ $option->is_correct ? 'font-medium text-green-400' : 'text-gray-300 group-hover:text-gray-200' }}">{{ $option->option_text }}</span>
+                                        <div class="grow {{ $option->is_correct ? 'font-medium text-green-400' : 'text-gray-300 group-hover:text-gray-200' }} prose prose-invert max-w-none">
+                                            {!! $oText !!}
+                                        </div>
+                                        
                                         @if($option->is_correct) 
-                                            <span class="ml-3 text-xs bg-green-900/60 text-green-300 px-2.5 py-1 rounded-full border border-green-700/50 font-medium">Jawaban Benar</span> 
+                                            <span class="ml-3 mt-1 text-xs bg-green-900/60 text-green-300 px-2.5 py-1 rounded-full border border-green-700/50 font-medium shrink-0">Jawaban Benar</span> 
                                         @endif
                                     </div>
                                     @endforeach

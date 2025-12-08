@@ -1,44 +1,43 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-bold text-3xl text-white tracking-tight drop-shadow-md">
-            Gabung Kuis
-        </h2>
-    </x-slot>
+<x-guest-layout>
+    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        {{ __('Masukkan kode kuis untuk mulai mengerjakan.') }}
+    </div>
 
-    <div class="py-12">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden shadow-2xl sm:rounded-2xl p-8 text-center">
-                
-                <div class="mb-8 flex justify-center">
-                    <div class="p-4 bg-indigo-500/20 rounded-full text-indigo-400">
-                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
-                    </div>
-                </div>
+    <form method="POST" action="{{ route('quizzes.join.store') }}">
+        @csrf
 
-                <form action="{{ route('quizzes.join.store') }}" method="POST" class="space-y-6">
-                    @csrf
-                    <div>
-                        <label for="code" class="block font-bold text-lg text-white mb-4">Masukkan Kode Kuis</label>
-                        <input type="text" name="code" id="code" class="block w-full text-center text-4xl font-mono tracking-[0.5em] font-bold rounded-xl shadow-lg border-gray-600 bg-black/30 text-white focus:border-indigo-500 focus:ring-indigo-500 uppercase py-4" required maxlength="6" minlength="6" placeholder="XXXXXX">
-                    </div>
+        <div>
+            <x-input-label for="join_code" :value="__('Kode Kuis')" />
+            <x-text-input id="join_code" class="block mt-1 w-full font-mono text-center text-lg tracking-widest uppercase" 
+                          type="text" name="join_code" :value="old('join_code')" required autofocus placeholder="ABC123" />
+            <x-input-error :messages="$errors->get('join_code')" class="mt-2" />
+        </div>
 
-                    @if(!Auth::check())
-                        <div>
-                            <label for="guest_name" class="block font-bold text-lg text-white mb-2">Nama Anda</label>
-                            <input type="text" name="guest_name" id="guest_name" class="block w-full text-center text-lg rounded-xl shadow-lg border-gray-600 bg-black/30 text-white focus:border-indigo-500 focus:ring-indigo-500 py-3" required placeholder="Masukkan Nama Lengkap" value="{{ old('guest_name') }}">
-                            <p class="text-xs text-gray-400 mt-2">Nama ini akan muncul di leaderboard.</p>
-                        </div>
-                    @endif
-                    
-                    @if(session('error'))
-                        <p class="text-sm text-red-400 mt-4 font-semibold bg-red-500/10 py-2 rounded-lg border border-red-500/20">{{ session('error') }}</p>
-                    @endif
-                    
-                    <button type="submit" class="w-full inline-flex justify-center items-center px-6 py-4 bg-indigo-600 border border-transparent rounded-xl font-bold text-white text-lg uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition ease-in-out duration-150 shadow-lg transform hover:scale-[1.02]">
-                        Masuk Ruang Kuis
-                    </button>
-                </form>
+        @if(!Auth::check())
+        <div class="mt-4">
+            <x-input-label for="guest_name" :value="__('Nama Anda (Mode Tamu)')" />
+            <x-text-input id="guest_name" class="block mt-1 w-full" 
+                          type="text" name="guest_name" :value="old('guest_name')" required placeholder="Masukkan nama lengkap" />
+            <x-input-error :messages="$errors->get('guest_name')" class="mt-2" />
+            <p class="text-xs text-gray-500 mt-1">Anda mengerjakan sebagai tamu. Riwayat tidak akan tersimpan di akun.</p>
+        </div>
+        @else
+        <div class="mt-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center gap-3">
+            <div class="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">
+                {{ substr(Auth::user()->name, 0, 1) }}
+            </div>
+            <div class="text-sm">
+                <p class="text-gray-500 dark:text-gray-400 text-xs">Masuk sebagai:</p>
+                <p class="font-bold text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</p>
             </div>
         </div>
-    </div>
-</x-app-layout>
+        <input type="hidden" name="user_auth" value="1">
+        @endif
+
+        <div class="flex items-center justify-end mt-4">
+            <x-primary-button class="ms-3 w-full justify-center">
+                {{ __('Masuk Kuis') }}
+            </x-primary-button>
+        </div>
+    </form>
+</x-guest-layout>

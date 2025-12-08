@@ -79,7 +79,7 @@
                         </h2>
                         <p class="text-lg text-gray-400 relative z-10 max-w-2xl mx-auto font-light leading-relaxed">
                             Semua tipe soal terbuka untuk semua. <br class="hidden md:block">
-                            Upgrade untuk membuka kekuatan <span class="text-indigo-400 font-semibold">AI Guru Privat</span> Anda.
+                            Upgrade untuk menambahkan <span class="text-indigo-400 font-semibold">bantuan AI pribadi</span> Anda.
                         </p>
                     </div>
 
@@ -183,9 +183,11 @@
                                                 Tercakup
                                             </button>
                                         @else
-                                            <button class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-center text-sm font-bold transition-all shadow-lg shadow-blue-900/20 hover:shadow-blue-600/40">
+                                        <div class="mt-8">
+                                            <a href="{{ route('academic.verify') }}" class="block w-full bg-indigo-600 border border-transparent rounded-md py-3 px-6 text-center font-medium text-white hover:bg-indigo-700">
                                                 Ajukan Verifikasi
-                                            </button>
+                                            </a>
+                                        </div>
                                         @endif
                                     </div>
                                 </div>

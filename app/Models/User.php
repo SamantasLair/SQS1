@@ -21,6 +21,8 @@ class User extends Authenticatable
         'is_premium',
         'ai_usage_count',
         'last_ai_usage_date',
+        'google_id',
+        'avatar',
     ];
 
     protected $hidden = [

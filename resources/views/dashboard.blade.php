@@ -25,14 +25,14 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-colors duration-300">
                 <div class="flex items-center">
                     <div class="p-4 rounded-2xl bg-blue-500/20 text-blue-400 mr-5">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-400">Total Kuis Dibuat</p>
+                        <p class="text-sm font-medium text-gray-400">Total Kuis Saya</p>
                         <p class="text-3xl font-bold text-white">{{ $totalKuis }}</p>
                     </div>
                 </div>
@@ -50,16 +50,39 @@
                 </div>
             </div>
 
-            <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-colors duration-300">
-                <div class="flex items-center">
-                    <div class="p-4 rounded-2xl bg-green-500/20 text-green-400 mr-5">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-400">Rata-rata Skor</p>
-                        <p class="text-3xl font-bold text-white">{{ number_format($rataRataSkor, 1) }}</p>
-                    </div>
+            <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-colors duration-300 relative overflow-hidden">
+                <div class="absolute right-0 top-0 p-4 opacity-10">
+                    <svg class="w-12 h-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                 </div>
+                <p class="text-sm font-medium text-gray-400 mb-1">Kuota Kuis</p>
+                <p class="text-3xl font-bold text-white">
+                    {{ Auth::user()->quizzes()->count() }} <span class="text-lg text-gray-500 font-normal">/ {{ Auth::user()->getQuizLimit() }}</span>
+                </p>
+                @if(Auth::user()->quizzes()->count() >= Auth::user()->getQuizLimit())
+                    <div class="text-xs text-red-400 mt-2 font-bold bg-red-900/20 px-2 py-1 rounded inline-block">Limit Tercapai</div>
+                @else
+                    <div class="text-xs text-green-400 mt-2 bg-green-900/20 px-2 py-1 rounded inline-block">Tersedia</div>
+                @endif
+            </div>
+
+            <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/10 transition-colors duration-300 relative overflow-hidden">
+                <div class="absolute right-0 top-0 p-4 opacity-10">
+                    <svg class="w-12 h-12 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <p class="text-sm font-medium text-gray-400 mb-1">Kuota AI Harian</p>
+                @if(Auth::user()->is_premium)
+                    <p class="text-2xl font-bold text-purple-400">UNLIMITED</p>
+                    <div class="text-xs text-gray-500 mt-2">Akun Premium</div>
+                @else
+                    @php
+                        Auth::user()->consumeAiCredit(); 
+                        Auth::user()->decrement('ai_usage_count');
+                    @endphp
+                    <p class="text-3xl font-bold text-white">
+                        {{ Auth::user()->ai_usage_count }} <span class="text-lg text-gray-500 font-normal">/ {{ Auth::user()->getAiDailyLimit() }}</span>
+                    </p>
+                    <div class="text-xs text-gray-500 mt-2">Reset tiap hari</div>
+                @endif
             </div>
         </div>
 
@@ -109,7 +132,7 @@
                                 {{ $quiz->timer }} Menit
                             </td>
                             <td class="px-8 py-5 whitespace-nowrap">
-                                <span class="font-mono text-sm text-indigo-400 tracking-wider">
+                                <span class="font-mono text-sm text-indigo-400 tracking-wider bg-indigo-500/10 px-2 py-1 rounded">
                                     {{ $quiz->join_code }}
                                 </span>
                             </td>

@@ -37,8 +37,8 @@ class QuizAttemptController extends Controller
 
         if ($existingAttempt) {
             if ($this->hasTimeExpired($existingAttempt, $quiz)) {
-                $this->calculateScore($existingAttempt);
-                return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $existingAttempt->id]);
+                $this->finishAttempt($existingAttempt);
+                return redirect()->route('quizzes.leaderboard', $quiz);
             }
             return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $existingAttempt->id]);
         }
@@ -53,71 +53,95 @@ class QuizAttemptController extends Controller
         return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
     }
 
+    public function retake(Request $request, Quiz $quiz)
+    {
+        $userId = Auth::id();
+        $guestName = session('guest_name');
+
+        if (!$userId && !$guestName) {
+            return redirect()->route('quizzes.join');
+        }
+
+        $existingAttempts = QuizAttempt::where('quiz_id', $quiz->id)
+            ->where(function ($query) use ($userId, $guestName) {
+                if ($userId) {
+                    $query->where('user_id', $userId);
+                } else {
+                    $query->where('guest_name', $guestName);
+                }
+            })
+            ->get();
+
+        foreach ($existingAttempts as $attempt) {
+            $attempt->delete();
+        }
+
+        return $this->start($request, $quiz);
+    }
+
     public function show(Request $request, Quiz $quiz, QuizAttempt $attempt)
     {
         if (Auth::check() && $attempt->user_id !== Auth::id()) abort(403);
         if (!Auth::check() && $attempt->guest_name !== session('guest_name')) abort(403);
 
-        if ($attempt->completed_at || !is_null($attempt->score)) {
-            return $this->showResult($attempt);
+        if ($attempt->completed_at) {
+            return redirect()->route('quizzes.leaderboard', $quiz);
         }
 
         if ($this->hasTimeExpired($attempt, $quiz)) {
             return $this->finishAttempt($attempt);
         }
 
-        $questionIds = $this->getDeterministicQuestionOrder($quiz, $attempt);
-        
-        $answeredCount = UserAnswer::where('quiz_attempt_id', $attempt->id)->count();
-        
-        if ($answeredCount >= count($questionIds)) {
-            return $this->finishAttempt($attempt);
-        }
-
-        $currentQuestionId = $questionIds[$answeredCount];
-        $question = Question::with('options')->findOrFail($currentQuestionId);
-        
-        $progress = ($answeredCount + 1) . " / " . count($questionIds);
-
-        return view('quizzes.attempt.show', compact('quiz', 'attempt', 'question', 'progress'));
+        return view('quizzes.attempt.show', compact('quiz', 'attempt'));
     }
 
     public function submit(Request $request, Quiz $quiz, QuizAttempt $attempt)
     {
         if (Auth::check() && $attempt->user_id !== Auth::id()) abort(403);
         
+        if ($attempt->completed_at) {
+            return redirect()->route('quizzes.leaderboard', $quiz);
+        }
+
         if ($this->hasTimeExpired($attempt, $quiz)) {
             return $this->finishAttempt($attempt);
         }
 
-        $request->validate(['option_id' => 'required|integer']);
-
-        $questionIds = $this->getDeterministicQuestionOrder($quiz, $attempt);
-        $answeredCount = UserAnswer::where('quiz_attempt_id', $attempt->id)->count();
+        $rawAnswers = $request->input('answers', []);
         
-        if ($answeredCount >= count($questionIds)) {
-            return $this->finishAttempt($attempt);
+        foreach ($quiz->questions as $question) {
+            $value = $rawAnswers[$question->id] ?? null;
+            
+            if (!$value) continue;
+
+            $isCorrect = false;
+            $optionId = null;
+            $essayAns = null;
+
+            if ($question->question_type === 'multiple_choice') {
+                $optionId = $value;
+                $opt = $question->options()->find($optionId);
+                if ($opt && $opt->is_correct) {
+                    $isCorrect = true;
+                }
+            } else {
+                $essayAns = $value;
+            }
+
+            UserAnswer::updateOrCreate(
+                [
+                    'quiz_attempt_id' => $attempt->id,
+                    'question_id' => $question->id
+                ],
+                [
+                    'option_id' => $optionId,
+                    'essay_answer' => $essayAns,
+                    'is_correct' => $isCorrect
+                ]
+            );
         }
 
-        $currentQuestionId = $questionIds[$answeredCount];
-
-        UserAnswer::firstOrCreate(
-            ['quiz_attempt_id' => $attempt->id, 'question_id' => $currentQuestionId],
-            ['option_id' => $request->option_id]
-        );
-
-        return redirect()->route('quizzes.attempt', ['quiz' => $quiz->id, 'attempt' => $attempt->id]);
-    }
-    private function getDeterministicQuestionOrder(Quiz $quiz, QuizAttempt $attempt)
-    {
-        $ids = $quiz->questions()->orderBy('id')->pluck('id')->toArray();
-        
-        $seed = crc32($attempt->id); 
-        mt_srand($seed);
-        shuffle($ids);
-        mt_srand(); 
-
-        return $ids;
+        return $this->finishAttempt($attempt);
     }
 
     private function hasTimeExpired(QuizAttempt $attempt, Quiz $quiz)
@@ -128,26 +152,13 @@ class QuizAttemptController extends Controller
 
     private function finishAttempt(QuizAttempt $attempt)
     {
-        $this->calculateScore($attempt);
-        return redirect()->route('quizzes.attempt', [
-            'quiz' => $attempt->quiz_id, 
-            'attempt' => $attempt->id
-        ])->with('status', 'Kuis selesai.');
-    }
-
-    private function calculateScore(QuizAttempt $attempt)
-    {
-        if (!is_null($attempt->score)) return;
-
         $totalQuestions = $attempt->quiz->questions->count();
         $correctAnswers = 0;
 
-        $userAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
-            ->with('option')
-            ->get();
+        $userAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)->get();
 
         foreach ($userAnswers as $answer) {
-            if ($answer->option && $answer->option->is_correct) {
+            if ($answer->is_correct) {
                 $correctAnswers++;
             }
         }
@@ -158,23 +169,7 @@ class QuizAttemptController extends Controller
             'score' => $score,
             'completed_at' => now(),
         ]);
-    }
 
-    private function showResult(QuizAttempt $attempt)
-    {
-        $totalQuestions = $attempt->quiz->questions->count();
-        $correctAnswers = UserAnswer::where('quiz_attempt_id', $attempt->id)
-            ->whereHas('option', function ($query) {
-                $query->where('is_correct', true);
-            })
-            ->count();
-
-        $score = $attempt->score;
-        
-        $questions = $attempt->quiz->questions()->with(['options', 'userAnswers' => function($query) use ($attempt) {
-            $query->where('quiz_attempt_id', $attempt->id);
-        }])->get();
-
-        return view('quizzes.attempt.result', compact('attempt', 'score', 'totalQuestions', 'correctAnswers', 'questions'));
+        return redirect()->route('quizzes.leaderboard', $attempt->quiz_id)->with('success', 'Kuis Selesai!');
     }
 }

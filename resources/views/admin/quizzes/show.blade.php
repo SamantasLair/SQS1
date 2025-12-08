@@ -1,4 +1,47 @@
 <x-app-layout>
+    {{-- DEBUG START --}}
+    <div class="bg-red-500 text-white p-4 m-4 rounded font-mono text-xs overflow-auto">
+        <strong>DEBUG DATA (Hapus ini setelah analisis):</strong>
+        @php
+            $sampleQuestion = $quiz->questions->first();
+        @endphp
+        <pre>
+1. RAW DB: {{ $sampleQuestion->question_text }}
+2. DECODED 1x: {{ html_entity_decode($sampleQuestion->question_text) }}
+3. DECODED 2x: {{ html_entity_decode(html_entity_decode($sampleQuestion->question_text)) }}
+        </pre>
+    </div>
+    {{-- DEBUG END --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
+    <style>
+        .prose pre {
+            background-color: #282c34 !important;
+            color: #abb2bf !important;
+            padding: 0 !important;
+            margin: 0.5em 0 !important;
+            border-radius: 0.5rem !important;
+            overflow-x: auto;
+        }
+
+        .prose pre code {
+            background-color: transparent !important;
+            color: inherit !important;
+            font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+            padding: 0.75rem !important;
+            border: none !important;
+            display: block !important;
+            font-size: 0.875rem !important;
+            line-height: 1.5 !important;
+        }
+
+        .prose code::before,
+        .prose code::after {
+            content: "" !important;
+            display: none !important;
+        }
+    </style>
+
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-white leading-tight">
             Detail Kuis: {{ $quiz->title }}
@@ -29,12 +72,17 @@
                         <div class="bg-gray-900/50 p-4 rounded-lg">
                             <div class="flex gap-3">
                                 <span class="text-gray-500 font-bold">#{{ $index + 1 }}</span>
-                                <div class="flex-1">
-                                    <p class="text-white mb-2">{{ $q->question_text }}</p>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-white mb-2 prose prose-invert max-w-none">
+                                        {!! html_entity_decode($q->question_text) !!}
+                                    </div>
+
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         @foreach($q->options as $opt)
                                             <div class="text-sm px-3 py-2 rounded border {{ $opt->is_correct ? 'border-green-500 bg-green-900/20 text-green-300' : 'border-gray-700 text-gray-400' }}">
-                                                {{ $opt->option_text }}
+                                                <div class="prose prose-invert max-w-none">
+                                                    {!! html_entity_decode($opt->option_text) !!}
+                                                </div>
                                             </div>
                                         @endforeach
                                     </div>
@@ -57,4 +105,16 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            hljs.highlightAll();
+        });
+    </script>
 </x-app-layout>
