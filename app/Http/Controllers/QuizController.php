@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Quiz;
 use App\Models\Question;
-use App\Models\QuizAttempt;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -372,6 +371,11 @@ class QuizController extends Controller
 
         if ($level === 'none' || $level === 'basic') {
              return view('quizzes.analysis', ['quiz' => $quiz, 'analysis' => null, 'error' => 'Fitur ini hanya untuk Akademisi, Pro, atau Premium.']);
+        }
+
+        // Cek kuota AI di sini
+        if (!$user->consumeAiCredit()) {
+             return view('quizzes.analysis', ['quiz' => $quiz, 'analysis' => null, 'error' => 'Limit AI harian habis. Upgrade untuk akses tanpa batas.']);
         }
 
         $attempts = $quiz->attempts()->whereNotNull('score')->with(['user', 'answers.question'])->get();

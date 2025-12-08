@@ -49,7 +49,50 @@ class GeminiService
         Teks Materi:
         " . substr($text, 0, 30000);
 
-        return $this->executeRequest($prompt);
+        return $this->executeRequest([['text' => $prompt]]);
+    }
+
+    public function generateQuizFromImage(string $imagePath, int $pgAmount, int $essayAmount): array
+    {
+        $total = $pgAmount + $essayAmount;
+        
+        $imageData = base64_encode(file_get_contents($imagePath));
+        $mimeType = mime_content_type($imagePath);
+
+        $promptText = "Buatkan total {$total} soal kuis berdasarkan GAMBAR yang dilampirkan.
+        
+        INSTRUKSI DISTRIBUSI SOAL:
+        1. Buat tepat {$pgAmount} soal Pilihan Ganda (field 'question_type': 'multiple_choice').
+        2. Buat tepat {$essayAmount} soal Essay/Uraian (field 'question_type': 'essay').
+        3. Analisis gambar dengan teliti (teks, diagram, atau objek).
+        
+        ATURAN FORMATTING:
+        - Output WAJIB JSON murni array of objects.
+        
+        STRUKTUR JSON:
+        [
+            {
+                \"question_text\": \"Pertanyaan...\",
+                \"question_type\": \"multiple_choice\", 
+                \"topic\": \"Topik\",
+                \"options\": [
+                    {\"text\": \"A\", \"is_correct\": false},
+                    {\"text\": \"B\", \"is_correct\": true}
+                ]
+            }
+        ]";
+
+        $parts = [
+            ['text' => $promptText],
+            [
+                'inline_data' => [
+                    'mime_type' => $mimeType,
+                    'data' => $imageData
+                ]
+            ]
+        ];
+
+        return $this->executeRequest($parts);
     }
 
     public function analyzeQuizResult(array $data, string $level): string
@@ -67,31 +110,58 @@ class GeminiService
 
         if (empty($prompt)) return "Analisis tidak tersedia.";
 
-        $response = $this->executeRequest($prompt, false);
+        $response = $this->executeRequest([['text' => $prompt]], false);
         return is_string($response) ? $response : json_encode($response);
     }
 
-    private function executeRequest(string $prompt, bool $expectJson = true)
+    private function executeRequest(array $parts, bool $expectJson = true, int $retryCount = 0)
     {
         $model = $this->getCachedModel();
         
+        $url = "{$this->baseUrl}{$model}:generateContent?key={$this->apiKey}";
+        
+        $payload = [
+            'contents' => [['parts' => $parts]],
+            'generationConfig' => [
+                'temperature' => 0.7,
+                'topK' => 40,
+                'topP' => 0.95,
+                'maxOutputTokens' => 8192,
+                'responseMimeType' => $expectJson ? 'application/json' : 'text/plain',
+            ]
+        ];
+
+        $startTime = microtime(true);
+        Log::info('GEMINI REQUEST START', [
+            'url' => $url,
+            'model' => $model,
+            'retry' => $retryCount,
+            'expect_json' => $expectJson
+        ]);
+
         try {
-            $response = Http::timeout(30)->withHeaders([
+            $response = Http::timeout(60)->withHeaders([
                 'Content-Type' => 'application/json',
-            ])->post("{$this->baseUrl}{$model}:generateContent?key={$this->apiKey}", [
-                'contents' => [['parts' => [['text' => $prompt]]]],
-                'generationConfig' => [
-                    'temperature' => 0.7,
-                    'topK' => 40,
-                    'topP' => 0.95,
-                    'maxOutputTokens' => 8192,
-                    'responseMimeType' => $expectJson ? 'application/json' : 'text/plain',
-                ]
+            ])->post($url, $payload);
+
+            $duration = microtime(true) - $startTime;
+            
+            Log::info('GEMINI REQUEST END', [
+                'duration' => round($duration, 2) . 's',
+                'status' => $response->status(),
+                'body_snippet' => substr($response->body(), 0, 500)
             ]);
 
             if ($response->status() === 429) {
-                sleep(2);
-                return $this->executeRequest($prompt, $expectJson);
+                if ($retryCount < 3) {
+                    $sleepTime = pow(2, $retryCount + 1); 
+                    Log::warning("GEMINI RATE LIMIT HIT. Sleeping for {$sleepTime}s...");
+                    sleep($sleepTime);
+                    return $this->executeRequest($parts, $expectJson, $retryCount + 1);
+                } else {
+                    Log::error('GEMINI RATE LIMIT EXCEEDED AFTER RETRIES');
+                    return $expectJson ? [] : 'Layanan AI sedang sibuk (Rate Limit). Silakan coba lagi nanti.';
+                }
             }
 
             if ($response->failed()) {
@@ -99,7 +169,7 @@ class GeminiService
                     Cache::forget('gemini_active_model');
                 }
                 
-                Log::error('Gemini API Error: ' . $response->body());
+                Log::error('GEMINI API FAILED', ['body' => $response->body()]);
                 return $expectJson ? [] : 'Error generating content.';
             }
 
@@ -119,6 +189,7 @@ class GeminiService
                 $result = json_decode($jsonString, true);
                 
                 if (json_last_error() !== JSON_ERROR_NONE) {
+                    Log::error('GEMINI JSON PARSE ERROR', ['json_error' => json_last_error_msg(), 'raw_text' => $text]);
                     return [];
                 }
 
@@ -133,7 +204,7 @@ class GeminiService
             return $text;
 
         } catch (\Exception $e) {
-            Log::error('Gemini Service Exception: ' . $e->getMessage());
+            Log::error('GEMINI CRITICAL EXCEPTION', ['message' => $e->getMessage()]);
             return $expectJson ? [] : 'Service unavailable.';
         }
     }
@@ -147,7 +218,14 @@ class GeminiService
                 if ($response->successful()) {
                     $data = $response->json();
                     $models = $data['models'] ?? [];
-                    $preferred = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-pro'];
+                    
+                    $preferred = [
+                        'gemini-2.5-flash', 
+                        'gemini-2.5-flash-lite',
+                        'gemini-2.0-flash', 
+                        'gemini-2.0-flash-exp', 
+                        'gemini-1.5-flash'
+                    ];
 
                     foreach ($preferred as $term) {
                         foreach ($models as $model) {
@@ -166,9 +244,9 @@ class GeminiService
                     }
                 }
             } catch (\Exception $e) {
-                // Ignore
             }
-            return 'models/gemini-1.5-flash';
+            
+            return 'models/gemini-2.5-flash'; 
         });
     }
 }
